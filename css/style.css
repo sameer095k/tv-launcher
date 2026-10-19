@@ -1,0 +1,117 @@
+/* Sameer TV Launcher — Forest theme, 1920x1080 10-foot UI */
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1920px;height:1080px}
+body{
+  background:#0c1210;color:#f2f2ee;overflow:hidden;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  -webkit-user-select:none;user-select:none;
+}
+button{font-family:inherit}
+#app{display:flex;width:1920px;height:1080px}
+
+/* ---------- Sidebar ---------- */
+#sidebar{
+  width:320px;flex:0 0 320px;height:1080px;background:#0d130f;
+  border-right:1px solid #1d2620;display:flex;flex-direction:column;padding:44px 0;
+}
+.brand{display:flex;align-items:center;gap:16px;padding:0 36px;margin-bottom:56px}
+.brand-mark{
+  width:64px;height:64px;border-radius:16px;background:#12241a;color:#d4af37;
+  display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;letter-spacing:1px;
+  border:1px solid #2a3a2c;
+}
+.brand-name{font-size:27px;font-weight:700}
+#side-nav{display:flex;flex-direction:column;gap:6px}
+.side-item{
+  display:flex;align-items:center;gap:20px;width:100%;background:none;border:none;
+  border-left:5px solid transparent;color:#9aa39c;font-size:27px;font-weight:500;
+  padding:24px 32px 24px 31px;cursor:pointer;text-align:left;
+}
+.side-item .ico{font-size:30px;width:44px;text-align:center;flex:0 0 44px}
+.side-item.active{color:#fff;background:#141b15;border-left-color:#d4af37;font-weight:700}
+.side-foot{margin-top:auto;padding:0 36px}
+#clock{font-size:34px;font-weight:700}
+.noads{color:#3fb950;font-size:20px;font-weight:600;margin-top:10px}
+
+/* ---------- Main / views ---------- */
+#main{flex:1;padding:52px 60px;position:relative;overflow:hidden}
+.view{display:none}
+.view.active{display:block;animation:fadein .18s ease-out}
+@keyframes fadein{from{opacity:.4}to{opacity:1}}
+.view-title{font-size:34px;font-weight:700;margin-bottom:38px}
+.view-title .subtitle{color:#9aa39c;font-size:24px;font-weight:400;margin-left:10px}
+.section-title{font-size:26px;font-weight:700;color:#d8d8d0;margin:36px 0 20px}
+.hint{color:#9aa39c;font-size:20px;margin-top:30px}
+
+/* ---------- Focus ---------- */
+.focusable{cursor:pointer}
+.focusable:focus{outline:3px solid #d4af37;outline-offset:4px}
+.focusable:focus:not(:focus-visible){outline:3px solid #d4af37;outline-offset:4px}
+
+/* ---------- Apps grid ---------- */
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:30px}
+.tile{
+  height:252px;border-radius:22px;background:#141a15;border:2px solid transparent;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
+  position:relative;color:#fff;
+}
+.tile.dimmed{opacity:.32}
+/* App icon: letter tile with real icon overlaid */
+.appicon{
+  position:relative;display:inline-flex;align-items:center;justify-content:center;
+  background:#1d2b1f;color:#d4af37;font-weight:800;flex:0 0 auto;overflow:hidden;
+}
+.appicon img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.t-name{font-size:29px;font-weight:700}
+.t-sub{font-size:19px;color:#9aa39c}
+.live-badge{
+  position:absolute;top:18px;right:22px;background:#e5484d;color:#fff;
+  font-size:16px;font-weight:800;padding:6px 14px;border-radius:14px;letter-spacing:1px;
+}
+
+/* ---------- Live TV channels ---------- */
+.channels{display:grid;grid-template-columns:repeat(4,1fr);gap:28px}
+.channel{
+  height:300px;border-radius:22px;background:linear-gradient(135deg,#12241a,#0e1a12);
+  border:2px solid transparent;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:10px;color:#fff;
+}
+.ch-num{font-size:104px;font-weight:800;color:#d4af37;line-height:1}
+.ch-name{font-size:32px;font-weight:700;letter-spacing:4px}
+.ch-sub{font-size:18px;color:#9aa39c}
+
+/* ---------- App Store ---------- */
+.appstore{display:flex;flex-direction:column;gap:14px;max-height:440px;overflow:hidden}
+.store-row{
+  display:flex;align-items:center;gap:22px;background:#111711;
+  border-radius:16px;padding:14px 24px;
+}
+.s-ico{
+  width:64px;height:64px;flex:0 0 64px;border-radius:14px;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;
+}
+.s-name{font-size:26px;font-weight:500;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.s-id{font-size:17px;color:#6d766d}
+.btn{
+  background:#1d2b1f;color:#fff;border:2px solid transparent;border-radius:12px;
+  font-size:22px;font-weight:600;padding:12px 30px;
+}
+.star{background:none;border:none;font-size:36px;color:#5a635c;padding:6px 14px;line-height:1}
+.star.on{color:#d4af37}
+
+/* ---------- Inputs ---------- */
+.inputs{display:flex;gap:24px}
+.input-tile{
+  min-width:300px;height:120px;border-radius:18px;background:#121711;border:2px solid transparent;
+  display:flex;align-items:center;gap:18px;padding:0 30px;font-size:25px;font-weight:600;color:#fff;
+}
+.input-tile .ico{font-size:40px}
+
+/* ---------- Toast ---------- */
+#toast{
+  position:fixed;bottom:64px;left:50%;transform:translateX(-50%) translateY(16px);
+  background:#1d2b1f;border:1px solid #d4af37;color:#fff;font-size:24px;font-weight:500;
+  padding:16px 40px;border-radius:14px;opacity:0;transition:opacity .22s,transform .22s;
+  pointer-events:none;white-space:nowrap;z-index:50;
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
