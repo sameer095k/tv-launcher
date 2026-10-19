@@ -1,0 +1,9 @@
+{
+  "name": "sameer-tv-launcher",
+  "version": "1.0.0",
+  "description": "Custom TV launcher - Forest theme with gold accents",
+  "packageType": "app",
+  "appName": "Sameer's Launcher",
+  "appPath": "index.html",
+  "keys": ["MediaPlayPause", "MediaStop", "MediaRewind", "MediaFastForward"]
+}
