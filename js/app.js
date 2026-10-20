@@ -426,20 +426,35 @@ function tuneChannel(major) {
     try {
       TZ.tvchannel.tune(ch,
         function () { toast("Watching " + (ch.channelName || ("channel " + major))); },
-        function () { toast("Tune failed"); });
+        function (e) { toast("Tune failed" + (e && e.name ? " (" + e.name + ")" : "")); });
     } catch (e) { toast("Tune failed"); }
   }
+  function doTune() {
+    try {
+      // First try the current source's list; fall back to the AIR (antenna) list.
+      TZ.tvchannel.getChannelList(function (list) {
+        if (list && list.length) { onList(list); return; }
+        try { TZ.tvchannel.getChannelList(onList, function () { fail("Channel list unavailable"); }, "AIR"); }
+        catch (e) { fail("Channel list unavailable"); }
+      }, function () {
+        try { TZ.tvchannel.getChannelList(onList, function () { fail("Channel list unavailable"); }, "AIR"); }
+        catch (e) { fail("Channel list unavailable"); }
+      });
+    } catch (e) { fail("Channel list unavailable"); }
+  }
+  // tune() only works while the tuner is the active source; if the launcher
+  // was opened over another input, switch to the TV source first, then tune.
   try {
-    // First try the current source's list; fall back to the AIR (antenna) list.
-    TZ.tvchannel.getChannelList(function (list) {
-      if (list && list.length) { onList(list); return; }
-      try { TZ.tvchannel.getChannelList(onList, function () { fail("Channel list unavailable"); }, "AIR"); }
-      catch (e) { fail("Channel list unavailable"); }
-    }, function () {
-      try { TZ.tvchannel.getChannelList(onList, function () { fail("Channel list unavailable"); }, "AIR"); }
-      catch (e) { fail("Channel list unavailable"); }
-    });
-  } catch (e) { fail("Channel list unavailable"); }
+    if (TZ.tvwindow && TZ.tvwindow.getSourceList) {
+      TZ.tvwindow.getSourceList(function (sources) {
+        var tv = null;
+        (sources || []).forEach(function (s) { if (!tv && s.type === "TV") tv = s; });
+        if (!tv) { doTune(); return; }
+        try { TZ.tvwindow.setSource(tv, function () { doTune(); }, function () { doTune(); }); }
+        catch (e) { doTune(); }
+      }, function () { doTune(); });
+    } else { doTune(); }
+  } catch (e) { doTune(); }
 }
 
 function setSource(src) {
