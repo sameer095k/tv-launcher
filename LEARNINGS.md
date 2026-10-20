@@ -99,16 +99,17 @@ re-derive them.
   wraps to more lines, and rows grow taller. Anything you need a human
   to read or photograph (diagnostics!) belongs at the **top** of the
   plate, not the bottom.
-- The dock was still invisible on the TV across several builds that
-  rendered perfectly in desktop Chromium (v1.5–v1.7: transform
-  centering, backdrop-filter, max-content width, CSS-variable
-  background, left/right insets + bottom anchoring were each removed in
-  turn). It was the only element in the app anchored with `bottom`;
-  everything anchored from the top paints. v1.8 tests the CleanFrame
-  pattern — explicit `left/top/width/height`, all in px — with an
-  on-screen diagnostic line reporting the dock's computed display,
-  child count, and rectangle. (Outcome pending; update this entry when
-  the TV confirms it.)
+- The dock was invisible on the TV across several builds that rendered
+  perfectly in desktop Chromium (v1.5–v1.7: transform centering,
+  backdrop-filter, max-content width, CSS-variable background, and
+  left/right insets + bottom anchoring were each removed in turn).
+  **Fix (confirmed on the TV in v1.8): explicit `left/top/width/height`
+  in px — the CleanFrame pattern.** The dock was the only element in
+  the app anchored with `bottom`; everything anchored from the top
+  painted fine, and the moment the dock was top-anchored it appeared.
+  Lesson: on this TV's web runtime, don't anchor home-screen elements
+  with `bottom` (or center them with transforms/auto margins) — give
+  them explicit top-left geometry.
 
 ## Startup performance
 

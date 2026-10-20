@@ -928,29 +928,25 @@ function launchById(id, label) {
 }
 
 /* Samsung's Settings and Apps are CoBA panels hosted by Samsung Home
- * (com.samsung.tv.csfs) — launched cold from this launcher they accept
- * the launch but never take the screen, and v1.4's hide-self trick just
- * dumped the user onto Samsung's home bar (confirmed 2026-10-20). The
- * v1.7 recipe mirrors how the panels are reached from Samsung Home
- * itself: bring Samsung Home forward first, then launch the panel so
- * its host is the foreground app when the request lands. */
-function openPanel(panelId, label) {
+ * (com.samsung.tv.csfs) and CANNOT be opened from a web app: plain
+ * launch, launch+hide-self, and csfs-first at 0.9 s and 2.5 s were all
+ * confirmed on the TV (2026-10-20) to do nothing but raise Samsung's
+ * home bar — the panel launches report success and never appear. So
+ * these buttons do the one thing that actually works: raise Samsung's
+ * bar, where Samsung puts its own Settings gear and Apps tile, and say
+ * so plainly instead of pretending the panel opened. */
+function openSamsungBar(kind) {
   var st = $("set-status");
-  function note(msg) { if (st) st.textContent = msg; }
-  toast("Opening " + label + "\u2026");
-  note("Opening " + label + ": bringing Samsung Home forward first\u2026");
-  function launchPanel() {
-    try {
-      TZ.application.launch(panelId,
-        function () { note(label + " launched."); },
-        function (e) { note(label + " launch failed: " + errText(e)); toast(label + " failed: " + errText(e), 5000); });
-    } catch (e) { note(label + " launch threw: " + errText(e)); }
-  }
+  var isApps = kind === "apps";
+  toast(isApps ? "Opening Samsung Apps\u2026" : "Opening TV Settings\u2026");
+  if (st) st.textContent = isApps
+    ? "Samsung's bar is up — the Apps tile there opens the store. (Samsung doesn't let apps open the store directly.)"
+    : "Samsung's bar is up — the \u2699 gear at the left end of the bar opens Settings. (Samsung doesn't let apps open Settings directly.)";
   try {
     TZ.application.launch("com.samsung.tv.csfs",
-      function () { setTimeout(launchPanel, 2500); },
-      function () { launchPanel(); });
-  } catch (e) { launchPanel(); }
+      function () {},
+      function (e) { if (st) st.textContent = "Couldn't open Samsung's bar: " + errText(e); });
+  } catch (e) { if (st) st.textContent = "Couldn't open Samsung's bar: " + errText(e); }
 }
 
 /* The broadcast player is org.tizen.tv-viewer (the TV's own boot/startup
@@ -1306,13 +1302,9 @@ function bindUI() {
     })(optRows[oi]);
   }
   var os = $("open-settings");
-  if (os) os.addEventListener("click", function () {
-    openPanel("com.samsung.tv.coba.setting", "TV Settings");
-  });
+  if (os) os.addEventListener("click", function () { openSamsungBar("settings"); });
   var oas = $("open-apps-store");
-  if (oas) oas.addEventListener("click", function () {
-    openPanel("com.samsung.tv.coba.apps", "Samsung Apps");
-  });
+  if (oas) oas.addEventListener("click", function () { openSamsungBar("apps"); });
   window.addEventListener("resize", fitStage);
   var vu = $("vol-up");
   if (vu) vu.addEventListener("click", function () { changeVolume(1); });
