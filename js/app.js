@@ -85,7 +85,7 @@ var CHANNELS = [
   { major: 7,  name: "ABC", sub: "KABC · 7.1" },
   { major: 11, name: "FOX", sub: "KTTV · 11.1" }
 ];
-var SELF_ID = "sameer.tvlauncher";
+var SELF_ID = "SameerTVHome.Launcher";
 
 var state = {
   view: "apps",
