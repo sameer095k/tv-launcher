@@ -341,12 +341,23 @@ function renderChannels() {
  * the same way): hide service/preview/worker junk and known decoys. */
 var JUNK_APP_NAME = /(service|worker|preview|promotion|plugin|test|sdk|factory|daemon)/i;
 
+function isDefaultApp(id) {
+  for (var i = 0; i < DEFAULT_KEYWORDS.length; i++) {
+    if (DEFAULT_KEYWORDS[i].id === id) return true;
+  }
+  return false;
+}
+
 function renderAppStore() {
   var list = $("appstore-list");
   list.innerHTML = "";
   storeApps().forEach(function (app) {
     if (app.id === "com.samsung.tv.cobalt-yt") return;
     if (JUNK_APP_NAME.test(app.name) && !isPinned(app.id)) return;
+    // Match Samsung's app drawer: getAppsInfo returns every registered
+    // component, but only show=true apps are user-facing. Home defaults
+    // and pinned apps are always listed (CleanFrame's rule).
+    if (app.show === false && !isDefaultApp(app.id) && !isPinned(app.id)) return;
     var row = document.createElement("div");
     row.className = "store-row";
 
@@ -517,10 +528,21 @@ function tuneChannel(major) {
     toast(msg, 3500);
   }
 
+  /* tune() changes the tuner behind this full-screen app; the picture
+   * only appears once Samsung's player owns the screen, so a successful
+   * tune hands off to the Live TV app on the tuned channel. */
+  function tunedOk(ch) {
+    if (settled) return;
+    settled = true;
+    tvLog("Tuned to " + (ch.channelName || ("channel " + major)) + " — opening Samsung Live TV to play it\u2026");
+    toast("Watching " + (ch.channelName || ("channel " + major)));
+    setTimeout(openLiveTV, 350);
+  }
+
   function tryObjectForm(ch, next) {
     try {
       TZ.tvchannel.tune(ch, {
-        onsuccess: function () { done("Watching " + (ch.channelName || ("channel " + major))); },
+        onsuccess: function () { tunedOk(ch); },
         onerror: function (e) { next("object-form: " + errText(e)); }
       });
     } catch (e) { next("object-form threw: " + errText(e)); }
@@ -529,7 +551,7 @@ function tuneChannel(major) {
   function tryFunctionForm(ch, next) {
     try {
       TZ.tvchannel.tune(ch,
-        function () { done("Watching " + (ch.channelName || ("channel " + major))); },
+        function () { tunedOk(ch); },
         function (e) { next("function-form: " + errText(e)); },
         { type: "MAIN" });
     } catch (e) { next("function-form threw: " + errText(e)); }
@@ -565,10 +587,9 @@ function tuneChannel(major) {
   }
 
   function afterSource() {
-    fetchAndTune("AIR", function (err1) {
-      tvLog(err1 + " — retrying with the default channel list\u2026");
-      fetchAndTune(null, function (err2) { done(err2); });
-    });
+    // The "AIR" list mode is not a valid enum on this TV (TypeMismatchError,
+    // confirmed 2026-10-20); the default list is the tuner's own list.
+    fetchAndTune(null, function (err) { done(err); });
   }
 
   // Make the tuner the active source before tuning.
@@ -583,6 +604,29 @@ function tuneChannel(major) {
       }, function () { afterSource(); });
     } else { afterSource(); }
   } catch (e) { afterSource(); }
+}
+
+/* ================= Stage fit =================
+ * This TV grants the app a stage narrower than 1920 CSS px (text wrapped
+ * and the layout sat in the top-left at ~0.6 scale, Oct 2026). Design is
+ * always laid out at 1920x1080, then #app is scaled to the real stage so
+ * the result fills the screen on any stage size. At a true 1920 stage
+ * the scale is 1 and this is a no-op. */
+function fitStage() {
+  var app = $("app");
+  if (!app) return;
+  var w = window.innerWidth || 1920, h = window.innerHeight || 1080;
+  var s = Math.min(w / 1920, h / 1080);
+  if (s > 0.05 && Math.abs(s - 1) > 0.01) {
+    app.style.width = "1920px";
+    app.style.height = "1080px";
+    app.style.transformOrigin = "0 0";
+    app.style.transform = "scale(" + s + ")";
+  } else {
+    app.style.transform = "";
+    app.style.width = "";
+    app.style.height = "";
+  }
 }
 
 /* ================= Settings extras ================= */
@@ -731,7 +775,16 @@ function bindUI() {
   var ol = $("open-livetv");
   if (ol) ol.addEventListener("click", openLiveTV);
   var os = $("open-settings");
-  if (os) os.addEventListener("click", function () { launchById("com.samsung.tv.coba.setting", "TV Settings"); });
+  if (os) os.addEventListener("click", function () {
+    var st = $("set-status");
+    if (st) st.textContent = "Launching Samsung Settings (com.samsung.tv.coba.setting)\u2026";
+    try {
+      TZ.application.launch("com.samsung.tv.coba.setting",
+        function () { if (st) st.textContent = "Launch accepted — Settings should be on screen now."; },
+        function (e) { if (st) st.textContent = "Settings launch failed: " + errText(e); });
+    } catch (e) { if (st) st.textContent = "Settings launch threw: " + errText(e); }
+  });
+  window.addEventListener("resize", fitStage);
   var vu = $("vol-up");
   if (vu) vu.addEventListener("click", function () { changeVolume(1); });
   var vd = $("vol-down");
@@ -767,6 +820,7 @@ function bindUI() {
 
 /* ================= Init ================= */
 function init() {
+  fitStage();
   try {
     if (TZ.tvinputdevice && TZ.tvinputdevice.registerKey) TZ.tvinputdevice.registerKey("Return");
   } catch (e) {}
