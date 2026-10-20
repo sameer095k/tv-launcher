@@ -112,11 +112,16 @@ function toast(msg) {
 }
 
 function startClock() {
+  var DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  var MONTHS = ["January", "February", "March", "April", "May", "June", "July",
+    "August", "September", "October", "November", "December"];
   function tick() {
     var d = new Date(), h = d.getHours(), m = d.getMinutes();
     var ap = h >= 12 ? "PM" : "AM";
     h = h % 12 || 12;
     $("clock").textContent = h + ":" + (m < 10 ? "0" + m : m) + " " + ap;
+    var dt = $("date");
+    if (dt) dt.textContent = DAYS[d.getDay()] + ", " + MONTHS[d.getMonth()] + " " + d.getDate();
   }
   tick();
   setInterval(tick, 20000);
@@ -215,7 +220,7 @@ function togglePin(appId) {
   savePinned();
   renderHomeGrid();
   renderAppStore();
-  refocusAfterRender("settings");
+  refocusAfterRender("allapps");
 }
 
 /* App icon: gold letter tile with the real app icon overlaid when it loads.
@@ -234,13 +239,13 @@ function appIcon(app, px, radius) {
 function makeHomeTile(pid) {
   var btn = document.createElement("button");
   btn.type = "button";
-  btn.className = "tile focusable";
+  btn.className = "approw focusable";
 
   if (pid === LIVE_TV) {
     btn.innerHTML =
-      '<span class="live-badge">&#x25CF; LIVE</span>' +
-      '<span class="t-ico" style="font-size:60px">&#x1F4E1;</span>' +
-      '<span class="t-name">Live TV</span><span class="t-sub">Antenna</span>';
+      '<span class="appicon" style="width:56px;height:56px;font-size:27px;border-radius:50%">&#x1F4E1;</span>' +
+      '<span class="row-name">Live TV</span>' +
+      '<span class="row-sub"><span class="live-dot">&#x25CF;</span> Antenna</span>';
     btn.addEventListener("click", function () { switchView("livetv"); });
     return btn;
   }
@@ -262,23 +267,23 @@ function makeHomeTile(pid) {
     btn.classList.add("dimmed");
     btn.disabled = true;
     btn.innerHTML =
-      appIcon(null, 96, 48) +
-      '<span class="t-name">' + esc(label) + "</span>" +
-      '<span class="t-sub">Not installed</span>';
+      appIcon(null, 56, 28) +
+      '<span class="row-name">' + esc(label) + "</span>" +
+      '<span class="row-sub">Not installed</span>';
     return btn;
   }
 
   (function (theApp) {
     btn.innerHTML =
-      appIcon(theApp, 96, 22) +
-      '<span class="t-name">' + esc(label) + "</span>";
+      appIcon(theApp, 56, 28) +
+      '<span class="row-name">' + esc(label) + "</span>";
     btn.addEventListener("click", function () { launchApp(theApp); });
   })(app);
   return btn;
 }
 
 function renderHomeGrid() {
-  var grid = $("home-grid");
+  var grid = $("home-list");
   grid.innerHTML = "";
   state.pinned.forEach(function (pid) { grid.appendChild(makeHomeTile(pid)); });
 }
@@ -523,7 +528,8 @@ function switchView(name) {
   var target = state.lastFocus[name];
   if (!target || !document.contains(target) || target.disabled || target.getBoundingClientRect().width === 0) {
     var first = document.querySelector("#view-" + name + " .focusable:not([disabled])");
-    target = first || document.querySelector('.side-item[data-view="' + name + '"]');
+    target = first || document.querySelector('.top-btn[data-view="' + name + '"]') ||
+      document.querySelector("#view-apps .focusable:not([disabled])");
   }
   if (target) target.focus();
 }
@@ -540,7 +546,7 @@ function goBack() {
 }
 
 function bindUI() {
-  var items = document.querySelectorAll(".side-item");
+  var items = document.querySelectorAll(".top-btn");
   for (var i = 0; i < items.length; i++) {
     (function (btn) {
       btn.addEventListener("click", function () { switchView(btn.getAttribute("data-view")); });
