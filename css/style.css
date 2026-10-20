@@ -52,7 +52,11 @@ button{font-family:inherit}
 .view-title .subtitle{color:rgba(255,255,255,.6);font-size:24px;font-weight:400;margin-left:12px}
 .section-title{font-size:25px;font-weight:600;color:rgba(255,255,255,.92);margin:34px 0 18px}
 .hint{color:rgba(255,255,255,.55);font-size:20px;margin-top:28px}
-.tvstatus{color:rgba(255,255,255,.85);font-size:21px;margin-top:16px;min-height:28px;text-shadow:0 1px 8px rgba(0,0,0,.4)}
+.tvstatus{color:rgba(255,255,255,.88);font-size:20px;line-height:1.5;margin-top:20px;min-height:28px;white-space:pre-line;text-shadow:0 1px 8px rgba(0,0,0,.4)}
+.setrow{display:flex;align-items:center;gap:18px;margin-top:10px;flex-wrap:wrap}
+.vollevel{font-size:25px;font-weight:600;min-width:120px;text-align:center}
+.infoline{color:rgba(255,255,255,.72);font-size:20px;line-height:1.5}
+#open-livetv{margin-top:26px}
 
 /* ---------- Home: the list ---------- */
 .homelist{
