@@ -23,6 +23,8 @@
   <main id="main">
     <section id="view-apps" class="view active" aria-label="Home">
       <div id="home-list" class="homelist"></div>
+      <div id="home-dock" class="dock"></div>
+      <div id="arrange-bar" class="arrangebar">Arrange — move the focused app with the arrow keys · OK when done</div>
     </section>
     <section id="view-livetv" class="view" aria-label="Live TV">
       <h1 class="view-title">Live TV <span class="subtitle">Antenna</span></h1>
@@ -34,12 +36,40 @@
     <section id="view-allapps" class="view" aria-label="All apps">
       <div class="plate">
         <h1 class="view-title">All apps</h1>
+        <div class="setrow">
+          <button id="arrange-home" class="btn focusable" type="button">Arrange Home</button>
+          <span class="infoline">Reorder the apps on your Home screen</span>
+        </div>
         <div id="appstore-list" class="appstore"></div>
+      </div>
+    </section>
+    <section id="view-appearance" class="view" aria-label="Appearance">
+      <div class="plate ap-plate">
+        <h1 class="view-title">Appearance</h1>
+        <div class="ap-flex">
+          <div id="ap-preview" class="pv"></div>
+          <div id="ap-rows">
+            <button class="opt-row focusable" data-pref="background" type="button"><span class="opt-label">Background</span><span class="opt-val" id="optv-background"></span></button>
+            <button class="opt-row focusable" data-pref="layout" type="button"><span class="opt-label">Layout</span><span class="opt-val" id="optv-layout"></span></button>
+            <button class="opt-row focusable" data-pref="appsDisplay" type="button"><span class="opt-label">App display</span><span class="opt-val" id="optv-appsDisplay"></span></button>
+            <button class="opt-row focusable" data-pref="focusStyle" type="button"><span class="opt-label">Focus style</span><span class="opt-val" id="optv-focusStyle"></span></button>
+            <button class="opt-row focusable" data-pref="material" type="button"><span class="opt-label">Glass material</span><span class="opt-val" id="optv-material"></span></button>
+            <button class="opt-row focusable" data-pref="font" type="button"><span class="opt-label">Font</span><span class="opt-val" id="optv-font"></span></button>
+            <button class="opt-row focusable" data-pref="controls" type="button"><span class="opt-label">Home controls</span><span class="opt-val" id="optv-controls"></span></button>
+          </div>
+        </div>
+        <h2 class="section-title">Wallpaper</h2>
+        <div id="wp-picker" class="wp-picker"></div>
+        <p class="hint">&#x2039; &#x203A; changes the focused setting &middot; the preview follows as you browse photos</p>
       </div>
     </section>
     <section id="view-settings" class="view" aria-label="Settings">
       <div class="plate">
         <h1 class="view-title">Settings</h1>
+        <div class="setrow">
+          <button id="open-appearance" class="btn focusable" type="button">&#x1F3A8; Appearance</button>
+          <span class="infoline">Wallpaper, layout, font and focus style — with live preview</span>
+        </div>
         <div class="setrow">
           <button id="open-settings" class="btn focusable" type="button">&#x2699; TV Settings</button>
           <span class="infoline">Opens Samsung's own settings — picture, sound, network, broadcasting</span>
@@ -63,6 +93,7 @@
   </main>
   <div id="toast" role="status"></div>
 </div>
+<script type="text/javascript" src="$WEBAPIS/webapis/webapis.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

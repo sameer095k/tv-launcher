@@ -13,7 +13,7 @@ var MOCK_APPS = [
   { id: "com.amazon.amazonvideo", name: "Prime Video" },
   { id: "com.nfl.mobile",      name: "NFL" },
   { id: "com.google.youtube",  name: "YouTube" },
-  { id: "com.webvideocast.app", name: "Web Video Cast" },
+  { id: "instantbit.webvideocaster", name: "Web Video Caster" },
   { id: "com.spotify.tv",      name: "Spotify" }
 ];
 var MOCK_CHANNELS = [
@@ -99,7 +99,8 @@ var DEFAULT_KEYWORDS = [
   { id: "XtU8fQk2gN.ESPN",       kw: "espn",    label: "ESPN" },
   { id: "org.tizen.primevideo",  kw: "prime",   label: "Prime Video" },
   { id: "UdGpKNSRmw.NFL",        kw: "nfl",     label: "NFL" },
-  { id: "9Ur5IzDKqV.TizenYouTube", kw: "youtube", label: "YouTube" }
+  { id: "9Ur5IzDKqV.TizenYouTube", kw: "youtube", label: "YouTube" },
+  { id: "instantbit.webvideocaster", kw: "video cast", label: "Web Video Caster" }
 ];
 var LIVETV_ID = "com.samsung.tv.coba.livetv";
 var CHANNELS = [
@@ -110,10 +111,82 @@ var CHANNELS = [
 ];
 var SELF_ID = "SameerTV01.Launcher";
 
+/* ================= Appearance prefs (v1.5) =================
+ * CleanFrame-style appearance system: wallpaper / layout / display /
+ * focus / material / font / controls, all changeable from the TV in
+ * Settings -> Appearance with a live preview, saved in localStorage. */
+var WALLPAPERS = [
+  { id: "stacks",    name: "Sea stacks",      src: "assets/wallpaper.jpg" },
+  { id: "misty",     name: "Misty coast",     src: "assets/wp/misty.jpg" },
+  { id: "cove",      name: "Quiet cove",      src: "assets/wp/cove.jpg" },
+  { id: "forest",    name: "Forest mist",     src: "assets/wp/forest.jpg" },
+  { id: "valley",    name: "Mountain valley", src: "assets/wp/valley.jpg" },
+  { id: "night",     name: "Desert stars",    src: "assets/wp/night.jpg" },
+  { id: "peaks",     name: "Blue peaks",      src: "assets/wp/peaks.jpg" },
+  { id: "bridge",    name: "Bridge at dusk",  src: "assets/wp/bridge.jpg" },
+  { id: "ridge",     name: "Sunlit ridges",   src: "assets/wp/ridge.jpg" },
+  { id: "golden",    name: "Golden hour",     src: "assets/wp/golden.jpg" },
+  { id: "summit",    name: "Sunlit summits",  src: "assets/wp/summit.jpg" },
+  { id: "goldcoast", name: "Gold Coast dusk", src: "assets/wp/goldcoast.jpg" },
+  { id: "sydney",    name: "Sydney Harbour",  src: "assets/wp/sydney.jpg" },
+  { id: "amber",     name: "Amber hills",     src: "assets/wp/amber.jpg" },
+  { id: "mint",      name: "Mint wave",       src: "assets/wp/mint.jpg" },
+  { id: "alpine",    name: "Alpine glow",     src: "assets/wp/alpine.jpg" }
+];
+function wallpaperById(id) {
+  for (var i = 0; i < WALLPAPERS.length; i++) if (WALLPAPERS[i].id === id) return WALLPAPERS[i];
+  return WALLPAPERS[0];
+}
+var PREFS_KEY = "stv_prefs_v1";
+var PREFS_DEFAULT = {
+  background: "stacks", layout: "list", appsDisplay: "both",
+  focusStyle: "type", material: "frost", font: "system", controls: "icons"
+};
+function loadPrefs() {
+  var out = {}, k;
+  for (k in PREFS_DEFAULT) out[k] = PREFS_DEFAULT[k];
+  try {
+    var p = JSON.parse(localStorage.getItem(PREFS_KEY) || "null");
+    if (p && typeof p === "object") for (k in PREFS_DEFAULT) if (k in p) out[k] = p[k];
+  } catch (e) {}
+  return out;
+}
+var prefs = loadPrefs();
+function savePrefs() {
+  try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); } catch (e) {}
+}
+/* Option cycles for the Appearance rows. */
+var OPTION_VALUES = {
+  background: WALLPAPERS.map(function (w) { return w.id; }).concat(["dark", "light"]),
+  layout: ["list", "dock"],
+  appsDisplay: ["both", "icons", "text"],
+  focusStyle: ["type", "glass"],
+  material: ["soft", "frost", "tint"],
+  font: ["system", "manrope", "geist", "newsreader"],
+  controls: ["icons", "both", "text"]
+};
+var OPTION_LABELS = {
+  layout: { list: "List", dock: "Dock" },
+  appsDisplay: { both: "Icons + text", icons: "Icons only", text: "Text only" },
+  focusStyle: { type: "Type", glass: "Glass" },
+  material: { soft: "Soft", frost: "Frost", tint: "Clear tint" },
+  font: { system: "System", manrope: "Manrope", geist: "Geist", newsreader: "Newsreader" },
+  controls: { icons: "Icons", both: "Icons + text", text: "Text" }
+};
+function optionLabel(key, val) {
+  if (key === "background") {
+    if (val === "dark") return "Dark";
+    if (val === "light") return "Light";
+    return wallpaperById(val).name;
+  }
+  return (OPTION_LABELS[key] && OPTION_LABELS[key][val]) || val;
+}
+
 var state = {
   view: "apps",
   apps: [],
   pinned: [],
+  arranging: false,
   lastFocus: {}   // viewName -> element
 };
 
@@ -134,20 +207,25 @@ function toast(msg, ms) {
   toastTimer = setTimeout(function () { t.classList.remove("show"); }, ms || 2200);
 }
 
+var DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+var MONTHS = ["January", "February", "March", "April", "May", "June", "July",
+  "August", "September", "October", "November", "December"];
+function tickClock() {
+  var d = new Date(), h = d.getHours(), m = d.getMinutes();
+  var ap = h >= 12 ? "PM" : "AM";
+  h = h % 12 || 12;
+  var time = h + ":" + (m < 10 ? "0" + m : m) + " " + ap;
+  var date = DAYS[d.getDay()] + ", " + MONTHS[d.getMonth()] + " " + d.getDate();
+  var c = $("clock"); if (c) c.textContent = time;
+  var dt = $("date"); if (dt) dt.textContent = date;
+  var jcs = document.querySelectorAll(".js-clock");
+  for (var i = 0; i < jcs.length; i++) jcs[i].textContent = time;
+  var jds = document.querySelectorAll(".js-date");
+  for (var j = 0; j < jds.length; j++) jds[j].textContent = date;
+}
 function startClock() {
-  var DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-  var MONTHS = ["January", "February", "March", "April", "May", "June", "July",
-    "August", "September", "October", "November", "December"];
-  function tick() {
-    var d = new Date(), h = d.getHours(), m = d.getMinutes();
-    var ap = h >= 12 ? "PM" : "AM";
-    h = h % 12 || 12;
-    $("clock").textContent = h + ":" + (m < 10 ? "0" + m : m) + " " + ap;
-    var dt = $("date");
-    if (dt) dt.textContent = DAYS[d.getDay()] + ", " + MONTHS[d.getMonth()] + " " + d.getDate();
-  }
-  tick();
-  setInterval(tick, 20000);
+  tickClock();
+  setInterval(tickClock, 20000);
 }
 
 /* ================= App data ================= */
@@ -189,6 +267,18 @@ function savePinned() {
   try { localStorage.setItem(LS_KEY, JSON.stringify(state.pinned)); } catch (e) {}
 }
 
+/* When a new home default is added in an update, append it once to an
+ * existing saved pin list (marker version below) — never re-add after
+ * that, so a default he unpins stays unpinned. */
+var DEFAULTS_VERSION = 3; // v1.4 added Web Video Caster
+function defaultsVersion() {
+  try { return parseInt(localStorage.getItem("stv_defaults_v") || "0", 10) || 0; }
+  catch (e) { return 0; }
+}
+function setDefaultsVersion() {
+  try { localStorage.setItem("stv_defaults_v", String(DEFAULTS_VERSION)); } catch (e) {}
+}
+
 function loadPinned() {
   var pinned = null;
   try {
@@ -201,6 +291,16 @@ function loadPinned() {
       var app = (d.id && findAppById(d.id)) || findAppByKeyword(d.kw);
       pinned.push(app ? app.id : "kw:" + d.kw);
     });
+    setDefaultsVersion();
+  } else if (defaultsVersion() < DEFAULTS_VERSION) {
+    DEFAULT_KEYWORDS.forEach(function (d) {
+      var app = (d.id && findAppById(d.id)) || findAppByKeyword(d.kw);
+      var cand = app ? app.id : "kw:" + d.kw;
+      if (pinned.indexOf(cand) === -1 && (!app || pinned.indexOf(app.id) === -1)) {
+        pinned.push(cand);
+      }
+    });
+    setDefaultsVersion();
   }
   // Re-resolve "kw:" placeholders against currently installed apps
   // (an app installed later should light its tile up automatically).
@@ -267,39 +367,44 @@ function appIcon(app, px, radius) {
 }
 
 /* ================= Rendering ================= */
+/* Resolve a pin id to what the Home UI should show for it. */
+function pinInfo(pid) {
+  if (pid === LIVE_TV) return { livetv: true, label: "Live TV", app: null, dimmed: false };
+  if (typeof pid === "string" && pid.indexOf("kw:") === 0) {
+    var kw = pid.slice(3), def = null;
+    DEFAULT_KEYWORDS.forEach(function (d) { if (d.kw === kw) def = d; });
+    return { livetv: false, label: def ? def.label : kw, app: null, dimmed: true };
+  }
+  var app = findAppById(pid);
+  if (!app) return { livetv: false, label: "Unknown app", app: null, dimmed: true };
+  return { livetv: false, label: app.name, app: app, dimmed: false };
+}
+
 function makeHomeTile(pid) {
   var btn = document.createElement("button");
   btn.type = "button";
   btn.className = "approw focusable";
+  btn.setAttribute("data-pid", pid);
+  var info = pinInfo(pid);
 
-  if (pid === LIVE_TV) {
+  if (info.livetv) {
     btn.innerHTML =
       '<span class="appicon" style="width:56px;height:56px;font-size:27px;border-radius:50%">&#x1F4E1;</span>' +
       '<span class="row-name">Live TV</span>' +
       '<span class="row-sub"><span class="live-dot">&#x25CF;</span> Antenna</span>';
-    btn.addEventListener("click", function () { switchView("livetv"); });
+    btn.addEventListener("click", function () {
+      if (state.arranging) { exitArrange(); return; }
+      switchView("livetv");
+    });
     return btn;
   }
 
-  var app = null, label = pid, dimmed = false;
-  if (typeof pid === "string" && pid.indexOf("kw:") === 0) {
-    var kw = pid.slice(3);
-    var def = null;
-    DEFAULT_KEYWORDS.forEach(function (d) { if (d.kw === kw) def = d; });
-    label = def ? def.label : kw;
-    dimmed = true; // not installed
-  } else {
-    app = findAppById(pid);
-    if (!app) { label = "Unknown app"; dimmed = true; }
-    else { label = app.name; }
-  }
-
-  if (dimmed) {
+  if (info.dimmed) {
     btn.classList.add("dimmed");
     btn.disabled = true;
     btn.innerHTML =
       appIcon(null, 56, 28) +
-      '<span class="row-name">' + esc(label) + "</span>" +
+      '<span class="row-name">' + esc(info.label) + "</span>" +
       '<span class="row-sub">Not installed</span>';
     return btn;
   }
@@ -307,16 +412,270 @@ function makeHomeTile(pid) {
   (function (theApp) {
     btn.innerHTML =
       appIcon(theApp, 56, 28) +
-      '<span class="row-name">' + esc(label) + "</span>";
-    btn.addEventListener("click", function () { launchApp(theApp); });
-  })(app);
+      '<span class="row-name">' + esc(info.label) + "</span>";
+    btn.addEventListener("click", function () {
+      if (state.arranging) { exitArrange(); return; }
+      launchApp(theApp);
+    });
+  })(info.app);
   return btn;
+}
+
+function makeDockSlot(pid) {
+  var btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "dock-slot focusable";
+  btn.setAttribute("data-pid", pid);
+  var info = pinInfo(pid);
+
+  if (info.livetv) {
+    btn.innerHTML =
+      '<span class="appicon" style="width:64px;height:64px;font-size:30px;border-radius:50%">&#x1F4E1;</span>' +
+      '<span class="slot-label">Live TV</span>';
+    btn.addEventListener("click", function () {
+      if (state.arranging) { exitArrange(); return; }
+      switchView("livetv");
+    });
+    return btn;
+  }
+  if (info.dimmed) {
+    btn.classList.add("dimmed");
+    btn.disabled = true;
+    btn.innerHTML = appIcon(null, 64, 32) + '<span class="slot-label">' + esc(info.label) + "</span>";
+    return btn;
+  }
+  (function (theApp) {
+    btn.innerHTML =
+      appIcon(theApp, 64, 16) +
+      '<span class="slot-label">' + esc(info.label) + "</span>";
+    btn.addEventListener("click", function () {
+      if (state.arranging) { exitArrange(); return; }
+      launchApp(theApp);
+    });
+  })(info.app);
+  return btn;
+}
+
+function renderDock() {
+  var dock = $("home-dock");
+  if (!dock) return;
+  dock.innerHTML = "";
+  state.pinned.forEach(function (pid) { dock.appendChild(makeDockSlot(pid)); });
 }
 
 function renderHomeGrid() {
   var grid = $("home-list");
   grid.innerHTML = "";
   state.pinned.forEach(function (pid) { grid.appendChild(makeHomeTile(pid)); });
+  renderDock();
+}
+
+/* ================= Appearance engine ================= */
+function renderControls() {
+  var btns = document.querySelectorAll(".top-btn");
+  for (var i = 0; i < btns.length; i++) {
+    var view = btns[i].getAttribute("data-view");
+    var glyph = view === "settings" ? "&#x2699;" : "&#x25A6;";
+    var text = view === "settings" ? "Settings" : "All apps";
+    if (prefs.controls === "text") btns[i].innerHTML = text;
+    else if (prefs.controls === "both") btns[i].innerHTML = glyph + "<span>" + text + "</span>";
+    else btns[i].innerHTML = glyph;
+  }
+}
+
+function applyPrefs() {
+  var b = document.body;
+  var bg = prefs.background;
+  var solid = (bg === "dark" || bg === "light");
+  b.classList.toggle("layout-dock", prefs.layout === "dock");
+  b.classList.toggle("layout-list", prefs.layout !== "dock");
+  b.classList.toggle("mode-icons", prefs.appsDisplay === "icons");
+  b.classList.toggle("mode-text", prefs.appsDisplay === "text");
+  b.classList.toggle("mode-both", prefs.appsDisplay === "both");
+  b.classList.toggle("focus-glass", prefs.focusStyle === "glass");
+  b.classList.toggle("focus-type", prefs.focusStyle !== "glass");
+  b.classList.toggle("mat-soft", prefs.material === "soft");
+  b.classList.toggle("mat-frost", prefs.material === "frost");
+  b.classList.toggle("mat-tint", prefs.material === "tint");
+  b.classList.toggle("font-manrope", prefs.font === "manrope");
+  b.classList.toggle("font-geist", prefs.font === "geist");
+  b.classList.toggle("font-newsreader", prefs.font === "newsreader");
+  b.classList.toggle("controls-text", prefs.controls === "text");
+  b.classList.toggle("controls-both", prefs.controls === "both");
+  b.classList.toggle("controls-icons", prefs.controls === "icons");
+  b.classList.toggle("bg-solid", solid);
+  b.classList.toggle("bg-dark", bg === "dark");
+  b.classList.toggle("bg-light", bg === "light");
+  b.classList.toggle("light", bg === "light");
+  var wp = $("wallpaper");
+  if (wp && !solid) {
+    var src = wallpaperById(bg).src;
+    if (wp.getAttribute("src") !== src) wp.setAttribute("src", src);
+  }
+  renderControls();
+  // Refresh the Appearance screen's value labels + preview + picker marks
+  for (var key in OPTION_VALUES) {
+    var el = $("optv-" + key);
+    if (el) el.textContent = "\u2039 " + optionLabel(key, prefs[key]) + " \u203A";
+  }
+  renderPreview();
+  markWpPicker();
+}
+
+function cyclePref(key, dir) {
+  var values = OPTION_VALUES[key];
+  if (!values) return;
+  var i = values.indexOf(prefs[key]);
+  if (i === -1) i = 0;
+  i = (i + dir + values.length) % values.length;
+  prefs[key] = values[i];
+  savePrefs();
+  applyPrefs();
+}
+
+/* Mini live preview of Home inside the Appearance screen. */
+function previewPins(limit) {
+  var out = [];
+  for (var i = 0; i < state.pinned.length && out.length < limit; i++) {
+    var info = pinInfo(state.pinned[i]);
+    if (!info.dimmed) out.push(info);
+  }
+  return out;
+}
+function renderPreview(previewBg) {
+  var pv = $("ap-preview");
+  if (!pv) return;
+  var bg = previewBg || prefs.background;
+  pv.className = "pv" +
+    (bg === "light" ? " light" : "") +
+    (prefs.layout === "dock" ? " layout-dock" : "") +
+    (prefs.focusStyle === "glass" ? " focus-glass" : " focus-type") +
+    (prefs.appsDisplay === "icons" ? " mode-icons" : prefs.appsDisplay === "text" ? " mode-text" : "") +
+    " mat-" + prefs.material +
+    (prefs.font !== "system" ? " pvfont-" + prefs.font : "");
+  pv.style.fontFamily = prefs.font === "manrope" ? "'Manrope',sans-serif" :
+    prefs.font === "geist" ? "'Geist',sans-serif" :
+    prefs.font === "newsreader" ? "'Newsreader',serif" : "";
+  var html = "";
+  if (bg !== "dark" && bg !== "light") {
+    html += '<img class="pv-wp" src="' + esc(wallpaperById(bg).src) + '" alt="">';
+  } else if (bg === "light") {
+    html += '<div class="pv-wp" style="background:#e9e6de"></div>';
+  } else {
+    html += '<div class="pv-wp" style="background:#0a0d11"></div>';
+  }
+  html += '<div class="pv-scrim"></div>';
+  html += '<div class="pv-clock"><span class="js-clock">--:--</span><span class="pv-date js-date"></span></div>';
+  var pins = previewPins(prefs.layout === "dock" ? 7 : 5);
+  html += '<div class="pv-list">';
+  pins.forEach(function (info, idx) {
+    var letter = info.livetv ? "\uD83D\uDCE1" : esc(info.label.charAt(0).toUpperCase());
+    html += '<div class="pv-row' + (idx === 0 ? " on" : "") + '">' +
+      '<span class="pv-ico">' + letter + '</span>' +
+      '<span class="pv-name">' + esc(info.label) + "</span></div>";
+  });
+  html += "</div>";
+  html += '<div class="pv-dock">';
+  pins.forEach(function (info, idx) {
+    var letter = info.livetv ? "\uD83D\uDCE1" : esc(info.label.charAt(0).toUpperCase());
+    html += '<div class="pv-slot' + (idx === 0 ? " on" : "") + '">' +
+      '<span class="pv-ico">' + letter + '</span>' +
+      '<span class="pv-lab">' + esc(info.label) + "</span></div>";
+  });
+  html += "</div>";
+  pv.innerHTML = html;
+  tickClock();
+}
+
+function renderWpPicker() {
+  var wrap = $("wp-picker");
+  if (!wrap) return;
+  wrap.innerHTML = "";
+  WALLPAPERS.forEach(function (w) {
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "wp-thumb focusable";
+    btn.setAttribute("data-bg", w.id);
+    var thumb = w.id === "stacks" ? w.src : "assets/wp/" + w.id + "-thumb.jpg";
+    btn.innerHTML = '<img src="' + esc(thumb) + '" alt="">' +
+      '<span class="wp-name">' + esc(w.name) + "</span>";
+    btn.addEventListener("click", function () {
+      prefs.background = w.id;
+      savePrefs();
+      applyPrefs();
+      toast("Background: " + w.name);
+    });
+    wrap.appendChild(btn);
+  });
+  [["dark", "Dark"], ["light", "Light"]].forEach(function (pair) {
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "wp-thumb focusable";
+    btn.setAttribute("data-bg", pair[0]);
+    btn.innerHTML = '<span class="wp-swatch ' + pair[0] + '">' + pair[1] + "</span>";
+    btn.addEventListener("click", function () {
+      prefs.background = pair[0];
+      savePrefs();
+      applyPrefs();
+      toast("Background: " + pair[1]);
+    });
+    wrap.appendChild(btn);
+  });
+  markWpPicker();
+}
+function markWpPicker() {
+  var thumbs = document.querySelectorAll(".wp-thumb");
+  for (var i = 0; i < thumbs.length; i++) {
+    thumbs[i].classList.toggle("sel", thumbs[i].getAttribute("data-bg") === prefs.background);
+  }
+}
+
+/* ================= Arrange mode ================= */
+function startArrange() {
+  if (!state.pinned.length) { toast("Nothing on Home to arrange"); return; }
+  state.arranging = true;
+  document.body.classList.add("arranging");
+  switchView("apps");
+  var first = homeItemEls()[0];
+  if (first) { first.focus(); markGrabbed(); }
+  toast("Arrange: arrow keys move the gold app, OK when done", 3500);
+}
+function exitArrange() {
+  if (!state.arranging) return;
+  state.arranging = false;
+  document.body.classList.remove("arranging");
+  var els = document.querySelectorAll(".grabbed");
+  for (var i = 0; i < els.length; i++) els[i].classList.remove("grabbed");
+}
+function homeItemEls() {
+  var sel = prefs.layout === "dock" ? "#home-dock .dock-slot" : "#home-list .approw";
+  var els = document.querySelectorAll(sel);
+  var out = [];
+  for (var i = 0; i < els.length; i++) if (!els[i].disabled) out.push(els[i]);
+  return out;
+}
+function markGrabbed() {
+  var els = document.querySelectorAll(".grabbed");
+  for (var i = 0; i < els.length; i++) els[i].classList.remove("grabbed");
+  var el = document.activeElement;
+  if (el && el.getAttribute && el.getAttribute("data-pid")) el.classList.add("grabbed");
+}
+function movePin(dir) {
+  var el = document.activeElement;
+  if (!el || !el.getAttribute) return;
+  var pid = el.getAttribute("data-pid");
+  var i = state.pinned.indexOf(pid);
+  var j = i + dir;
+  if (i === -1 || j < 0 || j >= state.pinned.length) return;
+  state.pinned.splice(i, 1);
+  state.pinned.splice(j, 0, pid);
+  savePinned();
+  renderHomeGrid();
+  var els = homeItemEls();
+  for (var k = 0; k < els.length; k++) {
+    if (els[k].getAttribute("data-pid") === pid) { els[k].focus(); break; }
+  }
+  markGrabbed();
 }
 
 function renderChannels() {
@@ -501,13 +860,41 @@ function launchById(id, label) {
   } catch (e) { toast("Couldn't open " + label + ": " + errText(e), 5000); }
 }
 
+/* The broadcast player is org.tizen.tv-viewer (the TV's own boot/startup
+ * app) — that is what Samsung's Home presents for Live TV: switch the
+ * source to TV first, then launch the viewer. The coba.livetv component
+ * accepted in-app launches but never took the screen (2026-10-20), so it
+ * is only a fallback here. */
+var VIEWER_ID = "org.tizen.tv-viewer";
 function openLiveTV() {
-  tvLog("Opening Samsung Live TV (" + LIVETV_ID + ")\u2026");
+  tvLog("Opening Live TV player (" + VIEWER_ID + ")\u2026");
+  function launchViewer() {
+    try {
+      TZ.application.launch(VIEWER_ID,
+        function () { tvLog("Live TV player launched."); },
+        function (e) {
+          tvLog("TV viewer failed: " + errText(e) + " — trying Samsung Live TV\u2026");
+          try {
+            TZ.application.launch(LIVETV_ID,
+              function () { tvLog("Samsung Live TV launched."); },
+              function (e2) { tvLog("Live TV launch failed: " + errText(e2)); toast("Couldn't open Live TV: " + errText(e2), 5000); });
+          } catch (e2) { tvLog("Live TV launch threw: " + errText(e2)); }
+        });
+    } catch (e) { tvLog("TV viewer launch threw: " + errText(e)); }
+  }
   try {
-    TZ.application.launch(LIVETV_ID,
-      function () { tvLog("Samsung Live TV launched."); },
-      function (e) { tvLog("Live TV launch failed: " + errText(e)); toast("Couldn't open Live TV: " + errText(e), 5000); });
-  } catch (e) { tvLog("Live TV launch threw: " + errText(e)); }
+    if (TZ.tvwindow && TZ.tvwindow.getSourceList) {
+      TZ.tvwindow.getSourceList(function (sources) {
+        var tv = null;
+        (sources || []).forEach(function (s) { if (!tv && s.type === "TV") tv = s; });
+        if (!tv) { launchViewer(); return; }
+        try { TZ.tvwindow.setSource(tv, function () { launchViewer(); }, function () { launchViewer(); }); }
+        catch (e) { launchViewer(); }
+      }, function () { launchViewer(); });
+      return;
+    }
+  } catch (e) {}
+  launchViewer();
 }
 
 /* Channel tuning. The TV's own error (2026-10-20) was TypeMismatchError
@@ -534,7 +921,7 @@ function tuneChannel(major) {
   function tunedOk(ch) {
     if (settled) return;
     settled = true;
-    tvLog("Tuned to " + (ch.channelName || ("channel " + major)) + " — opening Samsung Live TV to play it\u2026");
+    tvLog("Tuned to " + (ch.channelName || ("channel " + major)) + " — opening the Live TV player to play it\u2026");
     toast("Watching " + (ch.channelName || ("channel " + major)));
     setTimeout(openLiveTV, 350);
   }
@@ -563,7 +950,7 @@ function tuneChannel(major) {
       tvLog(e1 + " — tune, function callbacks\u2026");
       tryFunctionForm(ch, function (e2) {
         tvLog(e2);
-        done("Direct tuning isn't working from the launcher. The button above opens Samsung Live TV (Air + recents).");
+        done("Direct tuning isn't working from the launcher. The button above opens the Live TV player.");
       });
     });
   }
@@ -653,7 +1040,13 @@ function renderSettings() {
 
   var diag = $("diag");
   if (diag) {
+    var appEl = $("app"), barEl = $("topbar");
+    var tf = (appEl && appEl.style.transform) ? appEl.style.transform : "none";
     diag.textContent = "Viewport " + window.innerWidth + "\u00D7" + window.innerHeight +
+      " \u00B7 Doc " + (document.documentElement ? document.documentElement.clientWidth : "?") +
+      " \u00B7 App " + (appEl ? appEl.offsetWidth : "?") +
+      " \u00B7 Bar " + (barEl ? barEl.offsetWidth : "?") +
+      " \u00B7 Fit " + tf +
       " \u00B7 DPR " + (window.devicePixelRatio || 1) +
       " \u00B7 Screen " + window.screen.width + "\u00D7" + window.screen.height;
   }
@@ -735,7 +1128,10 @@ function move(dir) {
 }
 
 function switchView(name) {
+  fitStage();
+  if (name !== "apps") exitArrange();
   if (name === "settings") renderSettings();
+  if (name === "appearance") applyPrefs();
   state.view = name;
   var views = document.querySelectorAll(".view");
   for (var i = 0; i < views.length; i++) {
@@ -762,7 +1158,8 @@ function refocusAfterRender(viewName) {
 }
 
 function goBack() {
-  if (state.view !== "apps") switchView("apps");
+  if (state.view === "appearance") switchView("settings");
+  else if (state.view !== "apps") switchView("apps");
 }
 
 function bindUI() {
@@ -774,13 +1171,37 @@ function bindUI() {
   }
   var ol = $("open-livetv");
   if (ol) ol.addEventListener("click", openLiveTV);
+  var oa = $("open-appearance");
+  if (oa) oa.addEventListener("click", function () { switchView("appearance"); });
+  var ah = $("arrange-home");
+  if (ah) ah.addEventListener("click", function () { startArrange(); });
+  var optRows = document.querySelectorAll(".opt-row");
+  for (var oi = 0; oi < optRows.length; oi++) {
+    (function (row) {
+      row.addEventListener("click", function () {
+        cyclePref(row.getAttribute("data-pref"), 1);
+      });
+    })(optRows[oi]);
+  }
   var os = $("open-settings");
   if (os) os.addEventListener("click", function () {
     var st = $("set-status");
     if (st) st.textContent = "Launching Samsung Settings (com.samsung.tv.coba.setting)\u2026";
     try {
       TZ.application.launch("com.samsung.tv.coba.setting",
-        function () { if (st) st.textContent = "Launch accepted — Settings should be on screen now."; },
+        function () {
+          if (st) st.textContent = "Launch accepted — handing the screen to Settings\u2026";
+          // The coba Settings app starts but stays behind this launcher
+          // (launch reports success, nothing appears). Hide ourselves so
+          // it can take the screen; Return in Settings comes back here.
+          setTimeout(function () {
+            try {
+              if (TZ.application.getCurrentApplication) {
+                TZ.application.getCurrentApplication().hide();
+              }
+            } catch (e) {}
+          }, 600);
+        },
         function (e) { if (st) st.textContent = "Settings launch failed: " + errText(e); });
     } catch (e) { if (st) st.textContent = "Settings launch threw: " + errText(e); }
   });
@@ -797,9 +1218,43 @@ function bindUI() {
       var name = view.id.replace("view-", "");
       state.lastFocus[name] = e.target;
     }
+    if (state.arranging) markGrabbed();
+    // Browsing wallpaper thumbs previews them in the preview pane;
+    // Enter/click commits (CleanFrame's "OK Apply" pattern).
+    if (e.target.classList && e.target.classList.contains("wp-thumb")) {
+      renderPreview(e.target.getAttribute("data-bg"));
+    } else if (state.view === "appearance") {
+      renderPreview();
+    }
   });
   document.addEventListener("keydown", function (e) {
     var k = e.keyCode;
+    // Arrange mode: arrows move the focused pin, OK/Return exits.
+    if (state.arranging) {
+      var dockMode = prefs.layout === "dock";
+      if (k === 13 || k === 10009 || k === 8) { exitArrange(); }
+      else if (dockMode && k === 37) movePin(-1);
+      else if (dockMode && k === 39) movePin(1);
+      else if (!dockMode && k === 38) movePin(-1);
+      else if (!dockMode && k === 40) movePin(1);
+      else return;
+      if (e.preventDefault) e.preventDefault();
+      return;
+    }
+    // Appearance option rows: Left/Right (or Enter) cycles the value.
+    var ae = document.activeElement;
+    if (ae && ae.classList && ae.classList.contains("opt-row")) {
+      var key = ae.getAttribute("data-pref");
+      if (k === 37) cyclePref(key, -1);
+      else if (k === 39) cyclePref(key, 1);
+      else if (k === 13) cyclePref(key, 1);
+      else if (k === 38) move("up");
+      else if (k === 40) move("down");
+      else if (k === 10009 || k === 8) goBack();
+      else return;
+      if (e.preventDefault) e.preventDefault();
+      return;
+    }
     if (k === 37) move("left");
     else if (k === 38) move("up");
     else if (k === 39) move("right");
@@ -821,19 +1276,47 @@ function bindUI() {
 /* ================= Init ================= */
 function init() {
   fitStage();
+  // The TV's stage can settle to its real size after launch (and a
+  // resize event is not guaranteed), so re-fit for the first seconds.
+  var refits = 0;
+  var refitTimer = setInterval(function () {
+    fitStage();
+    refits++;
+    if (refits >= 12) clearInterval(refitTimer);
+  }, 500);
   try {
     if (TZ.tvinputdevice && TZ.tvinputdevice.registerKey) TZ.tvinputdevice.registerKey("Return");
   } catch (e) {}
   loadApps(function () {
     loadPinned();
+    // Desktop-preview QA hooks (never active on the TV): ?view=settings
+    // ?layout=dock&focus=glass&bg=peaks&font=manrope&display=icons&arrange=1
+    var qaView = null, qaArrange = false;
+    if (!TIZEN.real) {
+      try {
+        var q = new URLSearchParams(location.search);
+        if (q.get("bg")) prefs.background = q.get("bg");
+        if (q.get("layout")) prefs.layout = q.get("layout");
+        if (q.get("focus")) prefs.focusStyle = q.get("focus");
+        if (q.get("material")) prefs.material = q.get("material");
+        if (q.get("font")) prefs.font = q.get("font");
+        if (q.get("display")) prefs.appsDisplay = q.get("display");
+        if (q.get("controls")) prefs.controls = q.get("controls");
+        qaView = q.get("view");
+        qaArrange = q.get("arrange") === "1";
+      } catch (e) {}
+    }
     renderHomeGrid();
     renderChannels();
     renderAppStore();
     renderInputs();
     renderSettings();
+    renderWpPicker();
+    applyPrefs();
     bindUI();
     startClock();
-    switchView("apps");
+    switchView(qaView || "apps");
+    if (qaArrange) startArrange();
     if (!TIZEN.real) console.log("[launcher] desktop preview mode — tizen APIs mocked");
   });
 }
