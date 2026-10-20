@@ -187,6 +187,8 @@ var state = {
   apps: [],
   pinned: [],
   arranging: false,
+  storeBuilt: false,   // All Apps list is built lazily on first open (v1.9)
+  inputsBuilt: false,  // Inputs row likewise (v1.9)
   lastFocus: {}   // viewName -> element
 };
 
@@ -254,20 +256,45 @@ function startClock() {
 }
 
 /* ================= App data ================= */
+/* Startup speed (v1.9): getAppsInfo on the TV scans 400+ apps and
+ * takes a second or more, and the old init waited for it before
+ * painting anything. Now the last-known app list is cached in
+ * localStorage and seeded synchronously for an instant first paint;
+ * when the real scan returns, the cache refreshes and Home re-renders
+ * (resolving any pins the cache couldn't). */
+var APPCACHE_KEY = "stv_appcache_v1";
+function seedAppsFromCache() {
+  try {
+    var raw = localStorage.getItem(APPCACHE_KEY);
+    if (!raw) return;
+    var list = JSON.parse(raw);
+    if (!Array.isArray(list)) return;
+    state.apps = list.map(function (a) {
+      return { id: a[0], name: a[1], iconPath: a[2] || undefined, show: a[3] ? true : false };
+    });
+  } catch (e) {}
+}
+function cacheApps() {
+  try {
+    var slim = state.apps.map(function (a) {
+      return [a.id, a.name, a.iconPath || "", a.show === false ? 0 : 1];
+    });
+    localStorage.setItem(APPCACHE_KEY, JSON.stringify(slim));
+  } catch (e) {}
+}
+
 function loadApps(done) {
   function finish() { if (done) done(); }
   try {
     TZ.application.getAppsInfo(function (list) {
-      state.apps = Array.isArray(list) ? list : [];
+      if (Array.isArray(list) && list.length) state.apps = list;
       finish();
     }, function (e) {
       console.warn("getAppsInfo failed:", e);
-      state.apps = [];
-      finish();
+      finish(); // keep the cached seed, if any
     });
   } catch (e) {
     console.warn("getAppsInfo failed:", e);
-    state.apps = [];
     finish();
   }
 }
@@ -327,9 +354,16 @@ function loadPinned() {
     });
     setDefaultsVersion();
   }
+  state.pinned = pinned;
   // Re-resolve "kw:" placeholders against currently installed apps
   // (an app installed later should light its tile up automatically).
-  state.pinned = pinned.map(function (pid) {
+  resolvePinIds();
+}
+
+/* Map any "kw:<keyword>" pins to real app IDs using the current app
+ * list (seed cache at first paint, the real scan when it lands). */
+function resolvePinIds() {
+  state.pinned = state.pinned.map(function (pid) {
     if (typeof pid === "string" && pid.indexOf("kw:") === 0) {
       var app = findAppByKeyword(pid.slice(3));
       return app ? app.id : pid;
@@ -740,6 +774,7 @@ function isDefaultApp(id) {
 }
 
 function renderAppStore() {
+  state.storeBuilt = true;
   var list = $("appstore-list");
   list.innerHTML = "";
   storeApps().forEach(function (app) {
@@ -1210,7 +1245,14 @@ function move(dir) {
 function switchView(name) {
   fitStage();
   if (name !== "apps") exitArrange();
-  if (name === "settings") renderSettings();
+  // Lazy first-builds (v1.9): the All Apps list is 200+ DOM rows and
+  // the Inputs row costs a source-list API call — neither belongs in
+  // cold start when most launches never open those views.
+  if (name === "allapps" && !state.storeBuilt) renderAppStore();
+  if (name === "settings") {
+    if (!state.inputsBuilt) { state.inputsBuilt = true; renderInputs(); }
+    renderSettings();
+  }
   if (name === "appearance") applyPrefs();
   state.view = name;
   var views = document.querySelectorAll(".view");
@@ -1357,38 +1399,57 @@ function init() {
   try {
     if (TZ.tvinputdevice && TZ.tvinputdevice.registerKey) TZ.tvinputdevice.registerKey("Return");
   } catch (e) {}
+  // Instant first paint (v1.9): seed the app list from the localStorage
+  // cache and render Home synchronously; the real getAppsInfo scan runs
+  // in parallel and refreshes everything when it lands. On the very
+  // first run (no cache) Home paints with placeholder pins for the
+  // ~1 s the scan takes, then fills in — still faster than the old
+  // black-screen wait, and every later launch is instant.
+  seedAppsFromCache();
   loadApps(function () {
-    loadPinned();
-    // Desktop-preview QA hooks (never active on the TV): ?view=settings
-    // ?layout=dock&focus=glass&bg=peaks&font=manrope&display=icons&arrange=1
-    var qaView = null, qaArrange = false;
-    if (!TIZEN.real) {
-      try {
-        var q = new URLSearchParams(location.search);
-        if (q.get("bg")) prefs.background = q.get("bg");
-        if (q.get("layout")) prefs.layout = q.get("layout");
-        if (q.get("focus")) prefs.focusStyle = q.get("focus");
-        if (q.get("material")) prefs.material = q.get("material");
-        if (q.get("font")) prefs.font = q.get("font");
-        if (q.get("display")) prefs.appsDisplay = q.get("display");
-        if (q.get("controls")) prefs.controls = q.get("controls");
-        qaView = q.get("view");
-        qaArrange = q.get("arrange") === "1";
-      } catch (e) {}
-    }
+    cacheApps();
+    resolvePinIds();
+    // Preserve focus across the re-render: remember the focused pin,
+    // rebuild, then refocus the same pin in the visible container.
+    var ae = document.activeElement;
+    var pid = (ae && ae.getAttribute) ? ae.getAttribute("data-pid") : null;
     renderHomeGrid();
-    renderChannels();
-    renderAppStore();
-    renderInputs();
-    renderSettings();
-    renderWpPicker();
-    applyPrefs();
-    bindUI();
-    startClock();
-    switchView(qaView || "apps");
-    if (qaArrange) startArrange();
-    if (!TIZEN.real) console.log("[launcher] desktop preview mode — tizen APIs mocked");
+    if (state.storeBuilt) renderAppStore();
+    if (pid && state.view === "apps") {
+      var els = homeItemEls(), restored = false;
+      for (var k = 0; k < els.length; k++) {
+        if (els[k].getAttribute("data-pid") === pid) { els[k].focus(); restored = true; break; }
+      }
+      if (!restored) refocusAfterRender("apps");
+    }
   });
+  loadPinned();
+  // Desktop-preview QA hooks (never active on the TV): ?view=settings
+  // ?layout=dock&focus=glass&bg=peaks&font=manrope&display=icons&arrange=1
+  var qaView = null, qaArrange = false;
+  if (!TIZEN.real) {
+    try {
+      var q = new URLSearchParams(location.search);
+      if (q.get("bg")) prefs.background = q.get("bg");
+      if (q.get("layout")) prefs.layout = q.get("layout");
+      if (q.get("focus")) prefs.focusStyle = q.get("focus");
+      if (q.get("material")) prefs.material = q.get("material");
+      if (q.get("font")) prefs.font = q.get("font");
+      if (q.get("display")) prefs.appsDisplay = q.get("display");
+      if (q.get("controls")) prefs.controls = q.get("controls");
+      qaView = q.get("view");
+      qaArrange = q.get("arrange") === "1";
+    } catch (e) {}
+  }
+  renderHomeGrid();
+  renderChannels();
+  renderWpPicker();
+  applyPrefs();
+  bindUI();
+  startClock();
+  switchView(qaView || "apps");
+  if (qaArrange) startArrange();
+  if (!TIZEN.real) console.log("[launcher] desktop preview mode — tizen APIs mocked");
 }
 
 if (document.readyState === "loading") {
