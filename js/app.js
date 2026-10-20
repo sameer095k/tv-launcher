@@ -71,14 +71,19 @@ var TZ = TIZEN.api;
 
 /* ================= Constants & state ================= */
 var LIVE_TV = "__livetv__";
-var LS_KEY = "stv_pinned_v1";
+var LS_KEY = "stv_pinned_v2";
+/* Home defaults resolved by verified app ID first (stage-3 applist,
+ * 2026-10-20) — keyword match is only a fallback. Name matching alone
+ * grabbed wrong entries (e.g. "Disney Plus Preview Service"). */
 var DEFAULT_KEYWORDS = [
-  { kw: "netflix", label: "Netflix" },
-  { kw: "disney",  label: "Disney+" },
-  { kw: "espn",    label: "ESPN" },
-  { kw: "prime",   label: "Prime Video" },
-  { kw: "nfl",     label: "NFL" }
+  { id: "org.tizen.netflix-app", kw: "netflix", label: "Netflix" },
+  { id: "MCmYXNxgcu.DisneyPlus", kw: "disney",  label: "Disney+" },
+  { id: "XtU8fQk2gN.ESPN",       kw: "espn",    label: "ESPN" },
+  { id: "org.tizen.primevideo",  kw: "prime",   label: "Prime Video" },
+  { id: "UdGpKNSRmw.NFL",        kw: "nfl",     label: "NFL" },
+  { id: "9Ur5IzDKqV.TizenYouTube", kw: "youtube", label: "YouTube" }
 ];
+var LIVETV_ID = "com.samsung.tv.coba.livetv";
 var CHANNELS = [
   { major: 2,  name: "CBS", sub: "KCBS · 2.1" },
   { major: 4,  name: "NBC", sub: "KNBC · 4.1" },
@@ -103,12 +108,12 @@ function esc(s) {
 }
 
 var toastTimer = null;
-function toast(msg) {
+function toast(msg, ms) {
   var t = $("toast");
   t.textContent = msg;
   t.classList.add("show");
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(function () { t.classList.remove("show"); }, 2200);
+  toastTimer = setTimeout(function () { t.classList.remove("show"); }, ms || 2200);
 }
 
 function startClock() {
@@ -175,7 +180,7 @@ function loadPinned() {
   if (!Array.isArray(pinned)) {
     pinned = [LIVE_TV];
     DEFAULT_KEYWORDS.forEach(function (d) {
-      var app = findAppByKeyword(d.kw);
+      var app = (d.id && findAppById(d.id)) || findAppByKeyword(d.kw);
       pinned.push(app ? app.id : "kw:" + d.kw);
     });
   }
@@ -416,51 +421,90 @@ function launchApp(app) {
   } catch (e) { toast("Could not open " + app.name); }
 }
 
+function tvLog(msg) {
+  var el = $("tv-status");
+  if (el) el.textContent = msg;
+}
+
+function errText(e) {
+  if (!e) return "unknown error";
+  return (((e.name || "") + " " + (e.message || "")).trim()) || String(e);
+}
+
+/* Channel tuning: tvchannel.tune() has failed on this TV from a
+ * full-screen web app in every form tried (Oct 2026), so the flow is:
+ * try tune (AIR list, then the default list); on failure, log the exact
+ * error on screen and open Samsung's own Live TV app, which owns the
+ * Air tuner UI and the recent-channels list. */
 function tuneChannel(major) {
   toast("Tuning to channel " + major + "\u2026");
+  tvLog("Tuning to channel " + major + "\u2026");
   var settled = false;
-  function fail(msg) { if (!settled) { settled = true; toast(msg); } }
-  function onList(list) {
+
+  function openLiveTV(why) {
     if (settled) return;
     settled = true;
+    tvLog(why + " — opening Samsung Live TV instead.");
+    toast("Opening Samsung Live TV\u2026", 3000);
+    var app = findAppById(LIVETV_ID);
+    setTimeout(function () {
+      if (app) launchApp(app);
+      else toast("Live TV app not found on this TV", 5000);
+    }, 900);
+  }
+
+  function tryTune(ch, nextStep) {
+    try {
+      TZ.tvchannel.tune(ch,
+        function () {
+          if (settled) return;
+          settled = true;
+          tvLog("Watching " + (ch.channelName || ("channel " + major)));
+          toast("Watching " + (ch.channelName || ("channel " + major)));
+        },
+        function (e) { nextStep("tune() error: " + errText(e)); });
+    } catch (e) { nextStep("tune() threw: " + errText(e)); }
+  }
+
+  function pickFrom(list, modeLabel, nextStep) {
     var ch = null;
     (list || []).forEach(function (c) {
       if (!ch && Number(c.major) === Number(major)) ch = c;
     });
-    if (!ch) { toast("Channel " + major + " not found on antenna"); return; }
-    try {
-      TZ.tvchannel.tune(ch,
-        function () { toast("Watching " + (ch.channelName || ("channel " + major))); },
-        function (e) { toast("Tune failed: " + (e ? ((e.name || "") + " " + (e.message || "")).trim() : "unknown")); });
-    } catch (e) { toast("Tune failed: " + (e && e.message ? e.message : e)); }
+    if (!ch) { nextStep("channel " + major + " not in " + modeLabel + " list (" + (list ? list.length : 0) + " channels)"); return; }
+    tryTune(ch, nextStep);
   }
-  function doTune() {
+
+  function fetchAndTune(mode, nextStep) {
     try {
-      // Channels here are antenna channels: ask the AIR tuner for its list
-      // directly (the current-source list can belong to a different mode).
-      TZ.tvchannel.getChannelList(function (list) {
-        if (list && list.length) { onList(list); return; }
-        try { TZ.tvchannel.getChannelList(onList, function () { fail("Channel list unavailable"); }); }
-        catch (e) { fail("Channel list unavailable"); }
-      }, function () {
-        try { TZ.tvchannel.getChannelList(onList, function () { fail("Channel list unavailable"); }); }
-        catch (e) { fail("Channel list unavailable"); }
-      }, "AIR");
-    } catch (e) { fail("Channel list unavailable"); }
+      var args = [function (list) { pickFrom(list, mode || "default", nextStep); },
+                  function (e) { nextStep("getChannelList error: " + errText(e)); }];
+      if (mode) args.push(mode);
+      TZ.tvchannel.getChannelList.apply(TZ.tvchannel, args);
+    } catch (e) { nextStep("getChannelList threw: " + errText(e)); }
   }
-  // tune() only works while the tuner is the active source; if the launcher
-  // was opened over another input, switch to the TV source first, then tune.
+
+  function afterSource() {
+    fetchAndTune("AIR", function (err1) {
+      tvLog(err1 + " — retrying with the default channel list\u2026");
+      fetchAndTune(null, function (err2) {
+        openLiveTV("Direct tuning failed (" + err2 + ")");
+      });
+    });
+  }
+
+  // Make the tuner the active source before tuning.
   try {
     if (TZ.tvwindow && TZ.tvwindow.getSourceList) {
       TZ.tvwindow.getSourceList(function (sources) {
         var tv = null;
         (sources || []).forEach(function (s) { if (!tv && s.type === "TV") tv = s; });
-        if (!tv) { doTune(); return; }
-        try { TZ.tvwindow.setSource(tv, function () { doTune(); }, function () { doTune(); }); }
-        catch (e) { doTune(); }
-      }, function () { doTune(); });
-    } else { doTune(); }
-  } catch (e) { doTune(); }
+        if (!tv) { afterSource(); return; }
+        try { TZ.tvwindow.setSource(tv, function () { afterSource(); }, function () { afterSource(); }); }
+        catch (e) { afterSource(); }
+      }, function () { afterSource(); });
+    } else { afterSource(); }
+  } catch (e) { afterSource(); }
 }
 
 function setSource(src) {
