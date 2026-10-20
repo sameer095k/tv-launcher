@@ -33,9 +33,19 @@ re-derive them.
 - Live TV the way Samsung Home does it: switch the source to TV first
   (`tvwindow.setSource`), then launch **`org.tizen.tv-viewer`** — the
   TV's own broadcast player (it's the boot/startup app, always resident).
-- For Settings, launch `com.samsung.tv.coba.setting` and then **hide your
-  own app** (`tizen.application.getCurrentApplication().hide()`) so the
-  settings app can come forward.
+- **Samsung's Settings / Apps panels appear to be unopenable from a web
+  app.** Three recipes were tried for `com.samsung.tv.coba.setting`
+  (and `com.samsung.tv.coba.apps`), all confirmed on screen by the TV's
+  owner: (1) plain launch — accepted, nothing appears; (2) launch then
+  hide your own app (`getCurrentApplication().hide()`) — Samsung Home's
+  bar comes forward, the panel never does; (3) launch Samsung Home
+  (`com.samsung.tv.csfs`) first so the panel's host is foreground, then
+  launch the panel — the home bar rises, the panel launch reports
+  success, and the panel still never appears. The panels seem to be
+  internal surfaces of Samsung Home, reachable only through its own UI
+  (or the remote's gear button). CleanFrame's docs likewise list TV
+  settings as unconfirmed. SDB `execute` on these IDs does start the
+  processes — starting is not showing.
 - `window.webapis` (e.g. `webapis.productinfo` for model/firmware/DUID)
   is undefined unless the page includes
   `<script src="$WEBAPIS/webapis/webapis.js"></script>`.
@@ -77,6 +87,39 @@ re-derive them.
   changes.
 - Icon repaints on focus: avoid transitions on focus changes; scale
   instantly and set `backface-visibility: hidden` on icon images.
+- A scroll window sized with `top` + `bottom` + `overflow: hidden`
+  rendered the whole home list **invisible** on the TV while desktop
+  Chromium rendered it fine. Give the window an explicit `height`
+  instead. Relatedly, scroll-into-view math must be done in layout
+  coordinates (`offsetTop` / `clientHeight` / `scrollHeight`): mixing
+  `getBoundingClientRect()` (post-transform pixels) with `scrollTop`
+  (layout pixels) can scroll content clean out of its window.
+- Content plates can overflow the bottom of the TV screen even when
+  they fit on desktop — the TV lays the same plate out narrower, text
+  wraps to more lines, and rows grow taller. Anything you need a human
+  to read or photograph (diagnostics!) belongs at the **top** of the
+  plate, not the bottom.
+- The dock was still invisible on the TV across several builds that
+  rendered perfectly in desktop Chromium (v1.5–v1.7: transform
+  centering, backdrop-filter, max-content width, CSS-variable
+  background, left/right insets + bottom anchoring were each removed in
+  turn). It was the only element in the app anchored with `bottom`;
+  everything anchored from the top paints. v1.8 tests the CleanFrame
+  pattern — explicit `left/top/width/height`, all in px — with an
+  on-screen diagnostic line reporting the dock's computed display,
+  child count, and rectangle. (Outcome pending; update this entry when
+  the TV confirms it.)
+
+## Startup performance
+
+- `getAppsInfo()` scans 400+ apps and takes a second or more on the
+  TV; an init that waits for it before first paint feels broken.
+  Cache the slim app list (id, name, iconPath, show) in localStorage,
+  seed from it synchronously for an instant first paint, then refresh
+  when the real scan lands (re-render, preserving focus by pin ID).
+- Build big lists lazily: the All Apps list is 200+ DOM rows — create
+  it on first open, not at startup. Same for API-backed rows
+  (`getSourceList`) in Settings.
 
 ## Moving files to the build machine
 
