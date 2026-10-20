@@ -12,7 +12,7 @@ body{
 button{font-family:inherit}
 #wallpaper{
   position:fixed;inset:0;z-index:0;
-  background:url("../assets/wallpaper.jpg") center center / cover no-repeat;
+  width:1920px;height:1080px;object-fit:cover;
 }
 #scrim{
   position:fixed;inset:0;z-index:1;
@@ -28,8 +28,12 @@ button{font-family:inherit}
   display:flex;justify-content:space-between;align-items:flex-start;
   padding:44px 64px 0;
 }
-#clock{font-size:47px;font-weight:600;letter-spacing:.5px;line-height:1;text-shadow:0 2px 18px rgba(0,0,0,.35)}
-#date{font-size:21px;color:rgba(255,255,255,.72);margin-top:7px;text-shadow:0 1px 10px rgba(0,0,0,.35)}
+.clockbox{
+  background:rgba(6,10,14,.30);border-radius:18px;
+  padding:16px 24px 14px;margin:-16px 0 0 -24px;
+}
+#clock{font-size:45px;font-weight:600;letter-spacing:.5px;line-height:1}
+#date{font-size:20px;color:rgba(255,255,255,.78);margin-top:6px}
 .top-actions{display:flex;gap:16px}
 .top-btn{
   width:58px;height:58px;border-radius:50%;
@@ -48,6 +52,7 @@ button{font-family:inherit}
 .view-title .subtitle{color:rgba(255,255,255,.6);font-size:24px;font-weight:400;margin-left:12px}
 .section-title{font-size:25px;font-weight:600;color:rgba(255,255,255,.92);margin:34px 0 18px}
 .hint{color:rgba(255,255,255,.55);font-size:20px;margin-top:28px}
+.tvstatus{color:rgba(255,255,255,.85);font-size:21px;margin-top:16px;min-height:28px;text-shadow:0 1px 8px rgba(0,0,0,.4)}
 
 /* ---------- Home: the list ---------- */
 .homelist{
@@ -67,9 +72,10 @@ button{font-family:inherit}
 .row-name{
   font-size:51px;font-weight:600;letter-spacing:.2px;line-height:1.05;
   text-shadow:0 2px 16px rgba(0,0,0,.30);
-  transform-origin:left center;transition:transform .16s ease-out;
+  transform-origin:left center;
 }
-.approw:focus .row-name{transform:scale(1.13)}
+.approw:focus .row-name{transform:scale(1.13);will-change:transform}
+.appicon img{-webkit-backface-visibility:hidden;backface-visibility:hidden}
 .row-sub{font-size:22px;color:rgba(255,255,255,.55);margin-left:6px}
 .live-dot{color:#ff5147;font-size:19px;vertical-align:3px}
 .approw.dimmed{opacity:.38}
