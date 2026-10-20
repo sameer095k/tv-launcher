@@ -38,9 +38,12 @@ var MockTizen = {
       console.log("[mock tizen] tvchannel.getChannelList(mode=" + mode + ")");
       setTimeout(function () { onSuccess(MOCK_CHANNELS.slice()); }, 150);
     },
-    tune: function (ch, onSuccess, onError) {
+    tune: function (ch, cb, onError) {
       console.log("[mock tizen] tvchannel.tune(" + ch.major + "." + ch.minor + " " + ch.channelName + ")");
-      setTimeout(function () { if (onSuccess) onSuccess(); }, 300);
+      setTimeout(function () {
+        if (cb && typeof cb === "object" && cb.onsuccess) cb.onsuccess();
+        else if (typeof cb === "function") cb();
+      }, 300);
     }
   },
   systeminfo: {
@@ -55,7 +58,22 @@ var MockTizen = {
     setSource: function (src, onSuccess, onError) {
       console.log("[mock tizen] tvwindow.setSource(" + src + ")");
       setTimeout(function () { if (onSuccess) onSuccess(); }, 200);
+    },
+    getSourceList: function (onSuccess, onError) {
+      console.log("[mock tizen] tvwindow.getSourceList()");
+      setTimeout(function () {
+        onSuccess([{ type: "TV" }, { type: "HDMI", number: 1 }, { type: "HDMI", number: 2 }, { type: "HDMI", number: 3 }]);
+      }, 120);
     }
+  },
+  tvaudiocontrol: {
+    _v: 25, _mute: false,
+    getVolume: function () { return this._v; },
+    setVolume: function (v) { this._v = v; },
+    volumeUp: function () { this._v = Math.min(100, this._v + 1); },
+    volumeDown: function () { this._v = Math.max(0, this._v - 1); },
+    setMute: function (m) { this._mute = !!m; },
+    isMuteEnabled: function () { return this._mute; }
   },
   tvinputdevice: {
     registerKey: function (name) { console.log("[mock tizen] tvinputdevice.registerKey(" + name + ")"); }
@@ -228,14 +246,22 @@ function togglePin(appId) {
   refocusAfterRender("allapps");
 }
 
+/* Bundled icons for apps whose TV-provided iconPath is broken on this
+ * TV (YouTube showed a wrong swirl icon; Prime Video showed nothing). */
+var LOCAL_ICONS = {
+  "9Ur5IzDKqV.TizenYouTube": "assets/youtube.png",
+  "org.tizen.primevideo": "assets/prime.png"
+};
+
 /* App icon: gold letter tile with the real app icon overlaid when it loads.
  * If the icon image fails, onerror removes it and the letter shows through. */
 function appIcon(app, px, radius) {
   var letter = (app && app.name) ? esc(app.name.charAt(0).toUpperCase()) : "?";
   var style = "width:" + px + "px;height:" + px + "px;" +
     "font-size:" + Math.round(px * 0.45) + "px;border-radius:" + radius + "px;";
-  var img = (app && app.iconPath)
-    ? '<img src="' + esc(app.iconPath) + '" alt="" onerror="this.remove()">'
+  var iconSrc = (app && LOCAL_ICONS[app.id]) || (app && app.iconPath);
+  var img = iconSrc
+    ? '<img src="' + esc(iconSrc) + '" alt="" onerror="this.remove()">'
     : "";
   return '<span class="appicon" style="' + style + '">' + letter + img + "</span>";
 }
@@ -311,10 +337,16 @@ function renderChannels() {
   });
 }
 
+/* getAppsInfo returns plenty of internal entries (CleanFrame filters
+ * the same way): hide service/preview/worker junk and known decoys. */
+var JUNK_APP_NAME = /(service|worker|preview|promotion|plugin|test|sdk|factory|daemon)/i;
+
 function renderAppStore() {
   var list = $("appstore-list");
   list.innerHTML = "";
   storeApps().forEach(function (app) {
+    if (app.id === "com.samsung.tv.cobalt-yt") return;
+    if (JUNK_APP_NAME.test(app.name) && !isPinned(app.id)) return;
     var row = document.createElement("div");
     row.className = "store-row";
 
@@ -379,15 +411,28 @@ function sourceIcon(src) {
 }
 
 function getVideoSources(cb) {
-  function fallback() { cb(["TV"]); }
+  function fallback() {
+    try {
+      TZ.systeminfo.getPropertyValue("VIDEOSOURCE",
+        function (v) {
+          var c = v && v.connected;
+          cb(Array.isArray(c) && c.length ? c : ["TV"]);
+        },
+        function () { cb(["TV"]); });
+    } catch (e) { cb(["TV"]); }
+  }
+  // Prefer the full source list (every port, connected or not); the
+  // VIDEOSOURCE property only reports currently connected sources.
   try {
-    TZ.systeminfo.getPropertyValue("VIDEOSOURCE",
-      function (v) {
-        var c = v && v.connected;
-        cb(Array.isArray(c) && c.length ? c : ["TV"]);
-      },
-      fallback);
-  } catch (e) { fallback(); }
+    if (TZ.tvwindow && TZ.tvwindow.getSourceList) {
+      TZ.tvwindow.getSourceList(function (list) {
+        if (Array.isArray(list) && list.length) { cb(list); return; }
+        fallback();
+      }, function () { fallback(); });
+      return;
+    }
+  } catch (e) {}
+  fallback();
 }
 
 function renderInputs() {
@@ -421,9 +466,12 @@ function launchApp(app) {
   } catch (e) { toast("Could not open " + app.name); }
 }
 
+var tvLines = [];
 function tvLog(msg) {
+  tvLines.push(msg);
+  if (tvLines.length > 6) tvLines.shift();
   var el = $("tv-status");
-  if (el) el.textContent = msg;
+  if (el) el.textContent = tvLines.join("\n");
 }
 
 function errText(e) {
@@ -431,39 +479,71 @@ function errText(e) {
   return (((e.name || "") + " " + (e.message || "")).trim()) || String(e);
 }
 
-/* Channel tuning: tvchannel.tune() has failed on this TV from a
- * full-screen web app in every form tried (Oct 2026), so the flow is:
- * try tune (AIR list, then the default list); on failure, log the exact
- * error on screen and open Samsung's own Live TV app, which owns the
- * Air tuner UI and the recent-channels list. */
+/* Launch a Samsung system app directly by ID (CleanFrame's pattern —
+ * no getAppsInfo lookup needed; that list omits some system apps). */
+function launchById(id, label) {
+  toast("Opening " + label + "\u2026");
+  try {
+    TZ.application.launch(id,
+      function () {},
+      function (e) { toast("Couldn't open " + label + ": " + errText(e), 5000); });
+  } catch (e) { toast("Couldn't open " + label + ": " + errText(e), 5000); }
+}
+
+function openLiveTV() {
+  tvLog("Opening Samsung Live TV (" + LIVETV_ID + ")\u2026");
+  try {
+    TZ.application.launch(LIVETV_ID,
+      function () { tvLog("Samsung Live TV launched."); },
+      function (e) { tvLog("Live TV launch failed: " + errText(e)); toast("Couldn't open Live TV: " + errText(e), 5000); });
+  } catch (e) { tvLog("Live TV launch threw: " + errText(e)); }
+}
+
+/* Channel tuning. The TV's own error (2026-10-20) was TypeMismatchError
+ * "Argument 'callback' should be an object": Samsung's tune() wants a
+ * single callback OBJECT ({onsuccess, onerror}), not separate function
+ * arguments like the generic Tizen API. Try the object form first, then
+ * the function form with a tune option; every step is logged on screen. */
 function tuneChannel(major) {
   toast("Tuning to channel " + major + "\u2026");
+  tvLines = [];
   tvLog("Tuning to channel " + major + "\u2026");
   var settled = false;
 
-  function openLiveTV(why) {
+  function done(msg) {
     if (settled) return;
     settled = true;
-    tvLog(why + " — opening Samsung Live TV instead.");
-    toast("Opening Samsung Live TV\u2026", 3000);
-    var app = findAppById(LIVETV_ID);
-    setTimeout(function () {
-      if (app) launchApp(app);
-      else toast("Live TV app not found on this TV", 5000);
-    }, 900);
+    tvLog(msg);
+    toast(msg, 3500);
   }
 
-  function tryTune(ch, nextStep) {
+  function tryObjectForm(ch, next) {
+    try {
+      TZ.tvchannel.tune(ch, {
+        onsuccess: function () { done("Watching " + (ch.channelName || ("channel " + major))); },
+        onerror: function (e) { next("object-form: " + errText(e)); }
+      });
+    } catch (e) { next("object-form threw: " + errText(e)); }
+  }
+
+  function tryFunctionForm(ch, next) {
     try {
       TZ.tvchannel.tune(ch,
-        function () {
-          if (settled) return;
-          settled = true;
-          tvLog("Watching " + (ch.channelName || ("channel " + major)));
-          toast("Watching " + (ch.channelName || ("channel " + major)));
-        },
-        function (e) { nextStep("tune() error: " + errText(e)); });
-    } catch (e) { nextStep("tune() threw: " + errText(e)); }
+        function () { done("Watching " + (ch.channelName || ("channel " + major))); },
+        function (e) { next("function-form: " + errText(e)); },
+        { type: "MAIN" });
+    } catch (e) { next("function-form threw: " + errText(e)); }
+  }
+
+  function attempts(ch) {
+    tvLog("Found " + ch.major + "." + ch.minor + " " + (ch.channelName || "") + " — tune, object callback\u2026");
+    tryObjectForm(ch, function (e1) {
+      tvLog(e1 + " — tune, function callbacks\u2026");
+      tryFunctionForm(ch, function (e2) {
+        tvLog(e2);
+        done("Direct tuning isn't working from the launcher. The button above opens Samsung Live TV (Air + recents).");
+      });
+    });
   }
 
   function pickFrom(list, modeLabel, nextStep) {
@@ -472,7 +552,7 @@ function tuneChannel(major) {
       if (!ch && Number(c.major) === Number(major)) ch = c;
     });
     if (!ch) { nextStep("channel " + major + " not in " + modeLabel + " list (" + (list ? list.length : 0) + " channels)"); return; }
-    tryTune(ch, nextStep);
+    attempts(ch);
   }
 
   function fetchAndTune(mode, nextStep) {
@@ -487,9 +567,7 @@ function tuneChannel(major) {
   function afterSource() {
     fetchAndTune("AIR", function (err1) {
       tvLog(err1 + " — retrying with the default channel list\u2026");
-      fetchAndTune(null, function (err2) {
-        openLiveTV("Direct tuning failed (" + err2 + ")");
-      });
+      fetchAndTune(null, function (err2) { done(err2); });
     });
   }
 
@@ -505,6 +583,53 @@ function tuneChannel(major) {
       }, function () { afterSource(); });
     } else { afterSource(); }
   } catch (e) { afterSource(); }
+}
+
+/* ================= Settings extras ================= */
+function renderSettings() {
+  var lvl = $("vol-level");
+  try {
+    if (TZ.tvaudiocontrol) {
+      var v = TZ.tvaudiocontrol.getVolume();
+      var muted = TZ.tvaudiocontrol.isMuteEnabled && TZ.tvaudiocontrol.isMuteEnabled();
+      if (lvl) lvl.textContent = "Volume " + v + (muted ? " (muted)" : "");
+    } else if (lvl) { lvl.textContent = "Volume n/a"; }
+  } catch (e) { if (lvl) lvl.textContent = "Volume n/a"; }
+
+  var info = $("tv-info"), parts = [];
+  try {
+    var pi = window.webapis && window.webapis.productinfo;
+    if (pi) {
+      try { parts.push("Model " + pi.getModel()); } catch (e) {}
+      try { parts.push("Firmware " + pi.getFirmware()); } catch (e) {}
+      try { parts.push("DUID " + pi.getDuid()); } catch (e) {}
+    }
+  } catch (e) {}
+  if (info) info.textContent = parts.length ? parts.join(" \u00B7 ") : "TV info unavailable in preview";
+
+  var diag = $("diag");
+  if (diag) {
+    diag.textContent = "Viewport " + window.innerWidth + "\u00D7" + window.innerHeight +
+      " \u00B7 DPR " + (window.devicePixelRatio || 1) +
+      " \u00B7 Screen " + window.screen.width + "\u00D7" + window.screen.height;
+  }
+}
+
+function changeVolume(delta) {
+  try {
+    if (!TZ.tvaudiocontrol) { toast("Volume control unavailable"); return; }
+    if (delta > 0) TZ.tvaudiocontrol.volumeUp(); else TZ.tvaudiocontrol.volumeDown();
+    renderSettings();
+  } catch (e) { toast("Volume control failed: " + errText(e), 4000); }
+}
+
+function toggleMute() {
+  try {
+    if (!TZ.tvaudiocontrol) { toast("Mute unavailable"); return; }
+    var m = TZ.tvaudiocontrol.isMuteEnabled ? TZ.tvaudiocontrol.isMuteEnabled() : false;
+    TZ.tvaudiocontrol.setMute(!m);
+    renderSettings();
+  } catch (e) { toast("Mute failed: " + errText(e), 4000); }
 }
 
 function setSource(src) {
@@ -540,26 +665,33 @@ function move(dir) {
   var r = cur.getBoundingClientRect();
   var cx = r.left + r.width / 2, cy = r.top + r.height / 2;
   var best = null, bestScore = Infinity;
-  for (var i = 0; i < items.length; i++) {
-    var el = items[i];
-    if (el === cur) continue;
-    var b = el.getBoundingClientRect();
-    var ex = b.left + b.width / 2, ey = b.top + b.height / 2;
-    var dx = ex - cx, dy = ey - cy;
-    var ok = false, primary = 0, secondary = 0;
-    if (dir === "left")       { ok = dx < -8; primary = -dx; secondary = Math.abs(dy); }
-    else if (dir === "right") { ok = dx >  8; primary =  dx; secondary = Math.abs(dy); }
-    else if (dir === "up")    { ok = dy < -8; primary = -dy; secondary = Math.abs(dx); }
-    else if (dir === "down")  { ok = dy >  8; primary =  dy; secondary = Math.abs(dx); }
-    if (!ok) continue;
-    if (secondary > primary * 3 + 40) continue; // too far off-axis
-    var score = primary + secondary * 2.2;
-    if (score < bestScore) { bestScore = score; best = el; }
+  // Pass 0 enforces an off-axis cutoff; pass 1 (only if pass 0 found
+  // nothing) takes the nearest candidate in that direction regardless —
+  // otherwise the top-right buttons are unreachable from the list.
+  for (var pass = 0; pass < 2 && !best; pass++) {
+    bestScore = Infinity;
+    for (var i = 0; i < items.length; i++) {
+      var el = items[i];
+      if (el === cur) continue;
+      var b = el.getBoundingClientRect();
+      var ex = b.left + b.width / 2, ey = b.top + b.height / 2;
+      var dx = ex - cx, dy = ey - cy;
+      var ok = false, primary = 0, secondary = 0;
+      if (dir === "left")       { ok = dx < -8; primary = -dx; secondary = Math.abs(dy); }
+      else if (dir === "right") { ok = dx >  8; primary =  dx; secondary = Math.abs(dy); }
+      else if (dir === "up")    { ok = dy < -8; primary = -dy; secondary = Math.abs(dx); }
+      else if (dir === "down")  { ok = dy >  8; primary =  dy; secondary = Math.abs(dx); }
+      if (!ok) continue;
+      if (pass === 0 && secondary > primary * 3 + 40) continue; // too far off-axis
+      var score = primary + secondary * 2.2;
+      if (score < bestScore) { bestScore = score; best = el; }
+    }
   }
   if (best) best.focus();
 }
 
 function switchView(name) {
+  if (name === "settings") renderSettings();
   state.view = name;
   var views = document.querySelectorAll(".view");
   for (var i = 0; i < views.length; i++) {
@@ -596,6 +728,16 @@ function bindUI() {
       btn.addEventListener("click", function () { switchView(btn.getAttribute("data-view")); });
     })(items[i]);
   }
+  var ol = $("open-livetv");
+  if (ol) ol.addEventListener("click", openLiveTV);
+  var os = $("open-settings");
+  if (os) os.addEventListener("click", function () { launchById("com.samsung.tv.coba.setting", "TV Settings"); });
+  var vu = $("vol-up");
+  if (vu) vu.addEventListener("click", function () { changeVolume(1); });
+  var vd = $("vol-down");
+  if (vd) vd.addEventListener("click", function () { changeVolume(-1); });
+  var vm = $("vol-mute");
+  if (vm) vm.addEventListener("click", toggleMute);
   document.addEventListener("focusin", function (e) {
     var view = e.target.closest ? e.target.closest(".view") : null;
     if (view) {
@@ -634,6 +776,7 @@ function init() {
     renderChannels();
     renderAppStore();
     renderInputs();
+    renderSettings();
     bindUI();
     startClock();
     switchView("apps");
