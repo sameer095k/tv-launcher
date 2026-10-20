@@ -426,20 +426,21 @@ function tuneChannel(major) {
     try {
       TZ.tvchannel.tune(ch,
         function () { toast("Watching " + (ch.channelName || ("channel " + major))); },
-        function (e) { toast("Tune failed" + (e && e.name ? " (" + e.name + ")" : "")); });
-    } catch (e) { toast("Tune failed"); }
+        function (e) { toast("Tune failed: " + (e ? ((e.name || "") + " " + (e.message || "")).trim() : "unknown")); });
+    } catch (e) { toast("Tune failed: " + (e && e.message ? e.message : e)); }
   }
   function doTune() {
     try {
-      // First try the current source's list; fall back to the AIR (antenna) list.
+      // Channels here are antenna channels: ask the AIR tuner for its list
+      // directly (the current-source list can belong to a different mode).
       TZ.tvchannel.getChannelList(function (list) {
         if (list && list.length) { onList(list); return; }
-        try { TZ.tvchannel.getChannelList(onList, function () { fail("Channel list unavailable"); }, "AIR"); }
+        try { TZ.tvchannel.getChannelList(onList, function () { fail("Channel list unavailable"); }); }
         catch (e) { fail("Channel list unavailable"); }
       }, function () {
-        try { TZ.tvchannel.getChannelList(onList, function () { fail("Channel list unavailable"); }, "AIR"); }
+        try { TZ.tvchannel.getChannelList(onList, function () { fail("Channel list unavailable"); }); }
         catch (e) { fail("Channel list unavailable"); }
-      });
+      }, "AIR");
     } catch (e) { fail("Channel list unavailable"); }
   }
   // tune() only works while the tuner is the active source; if the launcher
