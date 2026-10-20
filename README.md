@@ -1,39 +1,68 @@
 # Sameer TV Launcher
 
-A custom, ad-free home screen for Samsung Tizen TVs. Sidebar layout with Apps, Live TV (antenna), and Settings. Forest theme (gold on dark green).
+A custom, ad-free home screen for a Samsung Q60D (Tizen 8.0). Full-bleed
+photo wallpaper, big-type app list (or a frosted-glass dock), one-tap
+antenna channels, and a CleanFrame-style Appearance system you can
+restyle from the couch. Built with — and heavily indebted to — the
+approach in [CleanFrame](https://github.com/nthnclrk/CleanFrame).
 
 ## What it does
 
-- **Apps**: Your pinned apps in a clean grid. Resolves installed apps by name matching (Netflix, Disney+, ESPN, Prime Video, NFL). No ads, no recommendations, no clutter.
-- **Live TV**: One-tap tuning for antenna channels (2 CBS, 4 NBC, 7 ABC, 11 FOX — edit `js/app.js` for your lineup).
-- **Settings**: Full app list ("App Store") — launch any installed app, pin/unpin to your home grid. Input switching (HDMI, etc.).
+- **Home**: pinned apps in a large-type list — Live TV, Netflix, Disney+,
+  ESPN, Prime Video, NFL, YouTube, Web Video Caster out of the box.
+  Pin/unpin anything from All Apps; **Arrange mode** reorders Home with
+  the arrow keys.
+- **Live TV**: channel tiles for 2 CBS, 4 NBC, 7 ABC, 11 FOX (Los Angeles
+  lineup — edit `CHANNELS` in `js/app.js`). Tuning hands off to the TV's
+  own broadcast viewer, the way Samsung Home does it.
+- **Appearance** (Settings → Appearance): live preview while you change
+  - 16 wallpapers (Unsplash photos, credits in `assets/wp/CREDITS.md`)
+    plus solid Dark / Light backgrounds
+  - Layout: List or Dock
+  - App display: icons + text, icons only, or text only
+  - Focus style: Type (focused name grows) or Glass (frosted pill),
+    with Soft / Frost / Clear tint glass materials
+  - Font: System, Manrope, Geist, or Newsreader (all SIL OFL)
+  - Home controls: icons, text, or both
+  Preferences persist in localStorage.
+- **Settings**: input switching (all ports), volume/mute, TV info, and a
+  handoff to Samsung's own Settings.
+- No ads, no recommendations, no tracking. Remote-driven: arrows, Enter,
+  Return.
 
-Remote-driven: arrows to move, Enter to select, Back to go home.
+## Installing
 
-## ⚠️ Caveats — read before trying to install
+This is a signed Tizen widget (package `SameerTV01`, app
+`SameerTV01.Launcher`, `required_version` 3.0). You need your own Samsung
+developer certificate tied to your TV's DUID, Developer Mode on, and
+"Permit to install applications" done once. Install with:
 
-**Samsung certificates required (Tizen 7.0+)**: On Tizen 7.0 and later (2022+ models), Samsung blocks installation of apps signed with self-signed certificates. You need a **Samsung-issued certificate**, which requires a one-time Samsung account sign-in. This is Samsung's policy, not a bug in this app.
+```
+sdb push <signed>.wgt /home/owner/share/tmp/sdk_tools/<name>.wgt
+sdb shell 0 vd_appinstall SameerTV01.Launcher /home/owner/share/tmp/sdk_tools/<name>.wgt
+```
 
-**Recommended install path**: Use [TizenBrewInstaller Desktop](https://github.com/reisxd/TizenBrewInstaller/releases) (Mac/Windows/Linux). It handles Samsung account sign-in, certificate creation, signing, and installation over WiFi. No USB drive needed.
+Read [LEARNINGS.md](LEARNINGS.md) before debugging install failures —
+on this firmware, `[118, -19]` almost certainly means your package ID is
+over 10 characters or your `required_version` is too new, not a cert
+problem.
 
-**USB is dead**: Samsung discontinued the USB demo-package installation method. Don't waste time on it.
+## Caveats
 
-**Developer Mode required**: Enable via Apps → `12345` → enter your PC's IP → restart TV.
-
-**This is an app, not a system replacement**: Installing this gives you a launcher *app* you can open. It does not replace Samsung's Home screen or intercept the Home button. (True Home-button remapping requires deeper system modifications.)
-
-**Model compatibility**: Built and tested for Samsung Q60D (Tizen 8.0). Should work on other Tizen 6.0+ TVs, but channel tuning and input switching depend on your model's API support. Antenna channel numbers in `js/app.js` are for Los Angeles — update for your area.
-
-**No root or exploits needed**: This uses only official Tizen Web APIs. Do not root your TV to install this.
+- Built and tested on one TV: Samsung QN65Q6DAAFXZA, Tizen 8.0,
+  firmware T-NKLAAKUC-2301.1. Other models/firmwares will differ.
+- This installs a launcher *app*. Making the remote's Home button open
+  it is a separate, deeper step (not in this repo yet).
+- Keep TV firmware auto-update off if you rely on developer behaviors.
 
 ## Files
 
-- `config.xml` — Tizen widget config (ID `sameer.tvlauncher`, v1.0.0)
-- `index.html` — App shell
-- `css/style.css` — Forest theme
-- `js/app.js` — All logic, dependency-free. Tizen APIs are guarded so it renders in a desktop browser for preview.
-- `icon.png` — App icon
-
-## Preview in a browser
-
-Open `index.html` in any browser. Tizen APIs are mocked — you'll see the full UI with sample data. Good for testing layout changes without a TV.
+- `config.xml` — widget config
+- `index.html` — app shell (views: Home, Live TV, All Apps, Appearance, Settings)
+- `css/style.css` — all styling, including themes/materials
+- `js/app.js` — all logic, dependency-free vanilla JS; Tizen APIs are
+  guarded so the UI also runs in a desktop browser with mock data
+  (handy for layout QA — append `?view=appearance&layout=dock&bg=peaks`
+  style params in the preview to jump states)
+- `assets/` — wallpaper + bundled icons, `assets/wp/` wallpapers,
+  `assets/fonts/` fonts
