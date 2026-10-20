@@ -101,7 +101,6 @@ var DEFAULT_KEYWORDS = [
   { id: "UdGpKNSRmw.NFL",        kw: "nfl",     label: "NFL" },
   { id: "9Ur5IzDKqV.TizenYouTube", kw: "youtube", label: "YouTube" },
   { id: "instantbit.webvideocaster", kw: "video cast", label: "Web Video Caster" },
-  { id: "xvvl3S1bvH.TizenBrewStandalone", kw: "tizenbrew", label: "TizenBrew" },
   { id: "", kw: "nuvio", label: "Nuvio" },
   { id: "xvvl3S1TT1.TizenTubeStandalone", kw: "tizentube", label: "TizenTube" }
 ];
@@ -325,7 +324,7 @@ function savePinned() {
 /* When a new home default is added in an update, append it once to an
  * existing saved pin list (marker version below) — never re-add after
  * that, so a default he unpins stays unpinned. */
-var DEFAULTS_VERSION = 5; // v1.12: Stremio pin removed at his request (purge below runs once)
+var DEFAULTS_VERSION = 6; // v1.13: TizenBrew pin removed at his request (purge below runs once)
 function defaultsVersion() {
   try { return parseInt(localStorage.getItem("stv_defaults_v") || "0", 10) || 0; }
   catch (e) { return 0; }
@@ -348,8 +347,11 @@ function loadPinned() {
     });
     setDefaultsVersion();
   } else if (defaultsVersion() < DEFAULTS_VERSION) {
-    // v1.12 one-time purge: the Stremio placeholder pin goes away for good.
-    pinned = pinned.filter(function (p) { return p !== "kw:stremio" && p !== "IkWsFHtOY9.Stremio"; });
+    // One-time purges: Stremio (v1.12) and TizenBrew (v1.13) pins go away for good.
+    pinned = pinned.filter(function (p) {
+      return p !== "kw:stremio" && p !== "IkWsFHtOY9.Stremio" &&
+             p !== "kw:tizenbrew" && p !== "xvvl3S1bvH.TizenBrewStandalone";
+    });
     DEFAULT_KEYWORDS.forEach(function (d) {
       var app = (d.id && findAppById(d.id)) || findAppByKeyword(d.kw);
       var cand = app ? app.id : "kw:" + d.kw;
