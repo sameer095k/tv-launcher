@@ -111,6 +111,27 @@ re-derive them.
   with `bottom` (or center them with transforms/auto margins) — give
   them explicit top-left geometry.
 
+## Installing third-party apps
+
+- The launcher's pipeline (sign with the SameerTV profile →
+  `vd_appinstall`) installs other people's widgets too, as long as
+  they obey the same firmware rules (package ≤ 10 chars,
+  `required_version` low) and use only public-level privileges.
+  A widget signed with a public *Tizen* cert (e.g. TizenTube) must be
+  **re-signed**: unzip, delete `signature1.xml` +
+  `author-signature.xml`, rezip, sign. An unsigned widget (Nuvio)
+  signs directly. Apps that need a Samsung *partner* certificate
+  (e.g. SushyDev's tizen-youtube) can't be installed with a public
+  profile.
+- Worked examples (Oct 2026): **Nuvio** — official NuvioTVSmart
+  1.2.8 wgt, package `NuvioTV001`, unsigned as shipped. **TizenTube**
+  — reisxd/TizenTube v2.1.1 `TizenTubeCobalt.wgt`, package
+  `xvvl3S1TT1`, re-signed; it's a standalone app with its own
+  service, so it needs neither TizenBrew nor the Developer Mode
+  Host-PC-IP flip (TizenBrew's own modules DO need Host PC IP set to
+  `127.0.0.1` — that setting and the SDB bridge's Mac IP are mutually
+  exclusive modes of the same toggle).
+
 ## The app list
 
 - `getAppsInfo` returns every registered component on the TV (400+) —

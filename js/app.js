@@ -102,8 +102,8 @@ var DEFAULT_KEYWORDS = [
   { id: "9Ur5IzDKqV.TizenYouTube", kw: "youtube", label: "YouTube" },
   { id: "instantbit.webvideocaster", kw: "video cast", label: "Web Video Caster" },
   { id: "xvvl3S1bvH.TizenBrewStandalone", kw: "tizenbrew", label: "TizenBrew" },
-  { id: "IkWsFHtOY9.Stremio", kw: "stremio", label: "Stremio" },
-  { id: "", kw: "nuvio", label: "Nuvio" }
+  { id: "", kw: "nuvio", label: "Nuvio" },
+  { id: "xvvl3S1TT1.TizenTubeStandalone", kw: "tizentube", label: "TizenTube" }
 ];
 var LIVETV_ID = "com.samsung.tv.coba.livetv";
 var CHANNELS = [
@@ -325,7 +325,7 @@ function savePinned() {
 /* When a new home default is added in an update, append it once to an
  * existing saved pin list (marker version below) — never re-add after
  * that, so a default he unpins stays unpinned. */
-var DEFAULTS_VERSION = 4; // v1.11 added TizenBrew, Stremio, Nuvio (latter two resolve when installed)
+var DEFAULTS_VERSION = 5; // v1.12: Stremio pin removed at his request (purge below runs once)
 function defaultsVersion() {
   try { return parseInt(localStorage.getItem("stv_defaults_v") || "0", 10) || 0; }
   catch (e) { return 0; }
@@ -348,6 +348,8 @@ function loadPinned() {
     });
     setDefaultsVersion();
   } else if (defaultsVersion() < DEFAULTS_VERSION) {
+    // v1.12 one-time purge: the Stremio placeholder pin goes away for good.
+    pinned = pinned.filter(function (p) { return p !== "kw:stremio" && p !== "IkWsFHtOY9.Stremio"; });
     DEFAULT_KEYWORDS.forEach(function (d) {
       var app = (d.id && findAppById(d.id)) || findAppByKeyword(d.kw);
       var cand = app ? app.id : "kw:" + d.kw;
