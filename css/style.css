@@ -120,6 +120,11 @@ body.focus-type .approw:focus .row-name{transform:scale(1.13);will-change:transf
   background:rgba(7,11,14,.60);border:1px solid rgba(255,255,255,.12);
   border-radius:26px;padding:42px 50px 46px;
 }
+/* Settings content is taller than the stage (rows + inputs + sound +
+ * about) — bound the plate with an explicit height and scroll it; the
+ * focusin handler reveals the focused row (v1.11). position:relative
+ * makes the plate the offsetParent revealIn's math expects. */
+#view-settings .plate{position:relative;height:882px;overflow-y:auto}
 .appstore{display:flex;flex-direction:column;gap:12px;max-height:560px;overflow:hidden;margin-top:26px}
 .store-row{
   display:flex;align-items:center;gap:22px;

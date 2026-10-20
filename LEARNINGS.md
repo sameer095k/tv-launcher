@@ -111,6 +111,39 @@ re-derive them.
   with `bottom` (or center them with transforms/auto margins) — give
   them explicit top-left geometry.
 
+## The app list
+
+- `getAppsInfo` returns every registered component on the TV (400+) —
+  Samsung's own app drawer hides most of them, and so should All Apps.
+  The reliable "user's own app" signal is the **app ID's shape**: apps
+  installed from Samsung's store get a 10-character package prefix
+  (`MCmYXNxgcu.DisneyPlus`, `9Ur5IzDKqV.TizenYouTube`), while Samsung
+  components use `com.samsung.*` / `org.tizen.*` hierarchies. A few
+  store apps keep hierarchical IDs (Netflix `org.tizen.netflix-app`,
+  Prime Video) and need an allowlist; a few store-shaped IDs are
+  internal (ad player, e-manual, privacy choices) and need a denylist.
+  Home pins/defaults always list regardless of shape. (CleanFrame's
+  rule, adopted v1.11 at the user's request: "only the apps they
+  download from the marketplace.")
+- Home defaults can include not-yet-installed apps: they sit as dimmed
+  labeled placeholders and resolve automatically (by ID, else by name
+  keyword) once the app is installed. That's how Stremio/Nuvio wait on
+  Home — both are homebrew-ecosystem apps (Stremio's Tizen build,
+  "Nuvio Legacy" native client) distributed via TizenBrew, not
+  Samsung's store.
+
+## Settings plate
+
+- A plate whose content is taller than the stage just runs off the
+  bottom unless it is a bounded scroller: explicit `height` +
+  `overflow-y:auto` + `position:relative` (so the plate is the
+  offsetParent the focus-reveal math expects), and the focusin handler
+  reveals the focused row inside it. Keep non-focusable content
+  (About text) ABOVE the last focusable rows — a tail with nothing
+  focusable in it can never be scrolled into view. (v1.11; the debug
+  diag block that used to top this plate was removed the same build at
+  the user's request — it had done its job.)
+
 ## Startup performance
 
 - `getAppsInfo()` scans 400+ apps and takes a second or more on the

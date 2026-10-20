@@ -100,7 +100,10 @@ var DEFAULT_KEYWORDS = [
   { id: "org.tizen.primevideo",  kw: "prime",   label: "Prime Video" },
   { id: "UdGpKNSRmw.NFL",        kw: "nfl",     label: "NFL" },
   { id: "9Ur5IzDKqV.TizenYouTube", kw: "youtube", label: "YouTube" },
-  { id: "instantbit.webvideocaster", kw: "video cast", label: "Web Video Caster" }
+  { id: "instantbit.webvideocaster", kw: "video cast", label: "Web Video Caster" },
+  { id: "xvvl3S1bvH.TizenBrewStandalone", kw: "tizenbrew", label: "TizenBrew" },
+  { id: "IkWsFHtOY9.Stremio", kw: "stremio", label: "Stremio" },
+  { id: "", kw: "nuvio", label: "Nuvio" }
 ];
 var LIVETV_ID = "com.samsung.tv.coba.livetv";
 var CHANNELS = [
@@ -322,7 +325,7 @@ function savePinned() {
 /* When a new home default is added in an update, append it once to an
  * existing saved pin list (marker version below) — never re-add after
  * that, so a default he unpins stays unpinned. */
-var DEFAULTS_VERSION = 3; // v1.4 added Web Video Caster
+var DEFAULTS_VERSION = 4; // v1.11 added TizenBrew, Stremio, Nuvio (latter two resolve when installed)
 function defaultsVersion() {
   try { return parseInt(localStorage.getItem("stv_defaults_v") || "0", 10) || 0; }
   catch (e) { return 0; }
@@ -374,13 +377,29 @@ function resolvePinIds() {
 }
 
 /* App Store list: installed, visible apps, minus system noise and ourselves. */
+/* All Apps lists only the user's own apps — the ones installed from
+ * Samsung's store — not the TV's 200+ registered components. The
+ * reliable signal is the app ID's shape (CleanFrame's rule, proven on
+ * a sibling TV): store apps get a 10-character package prefix
+ * (MCmYXNxgcu.DisneyPlus, 9Ur5IzDKqV.TizenYouTube), while Samsung
+ * components use com.samsung.* / org.tizen.* hierarchies. A few store
+ * apps keep hierarchical IDs (Netflix, Prime Video) — allowlisted.
+ * Home pins and defaults always list regardless. */
+var STORE_ID = /^[A-Za-z0-9]{10}\.[A-Za-z0-9_-]+$/;
+var STORE_ALLOW = { "org.tizen.netflix-app": 1, "org.tizen.primevideo": 1, "org.tizen.apple.apple-music": 1, "com.samsung.tv.aria-video": 1 };
+var STORE_DENY = { "adplatform.ADPlayer": 1, "25emanual3.emanual": 1, "tv6pbVMQFF.PrivacyChoices": 1, "ZODRT12q2l.WebAccountExtension": 1, "ByJlgt0XeD.CastSettingsApp": 1, "WykOS4t4F0.cmsWebApp": 1 };
+function isUserApp(a) {
+  if (!a || !a.name) return false;
+  if (isPinned(a.id) || isDefaultApp(a.id)) return true;
+  if (a.id === SELF_ID || STORE_DENY[a.id]) return false;
+  if (a.id === "com.samsung.tv.cobalt-yt" || /-dummy$/.test(a.id)) return false;
+  if (a.show === false) return false;
+  if (JUNK_APP_NAME.test(a.name)) return false;
+  return STORE_ALLOW[a.id] === 1 || STORE_ID.test(a.id);
+}
+
 function storeApps() {
-  return state.apps.filter(function (a) {
-    if (!a || !a.name) return false;
-    if (a.id === SELF_ID) return false;
-    if (a.show === false) return false;
-    return true;
-  }).sort(function (a, b) {
+  return state.apps.filter(isUserApp).sort(function (a, b) {
     return String(a.name).toLowerCase().localeCompare(String(b.name).toLowerCase());
   });
 }
@@ -940,8 +959,8 @@ function openSamsungBar(kind) {
   var isApps = kind === "apps";
   toast(isApps ? "Opening Samsung Apps\u2026" : "Opening TV Settings\u2026");
   if (st) st.textContent = isApps
-    ? "Samsung's bar is up — the Apps tile there opens the store. (Samsung doesn't let apps open the store directly.)"
-    : "Samsung's bar is up — the \u2699 gear at the left end of the bar opens Settings. (Samsung doesn't let apps open Settings directly.)";
+    ? "Samsung bar open — Apps tile = store."
+    : "Samsung bar open — \u2699 = Settings.";
   try {
     TZ.application.launch("com.samsung.tv.csfs",
       function () {},
@@ -1126,41 +1145,6 @@ function renderSettings() {
     }
   } catch (e) {}
   if (info) info.textContent = parts.length ? parts.join(" \u00B7 ") : "TV info unavailable in preview";
-
-  var diag = $("diag");
-  if (diag) {
-    var appEl = $("app"), barEl = $("topbar");
-    var tf = (appEl && appEl.style.transform) ? appEl.style.transform : "none";
-    var dockEl = $("home-dock"), dockInfo = "n/a";
-    if (dockEl) {
-      var dr = dockEl.getBoundingClientRect();
-      var dcs = window.getComputedStyle ? getComputedStyle(dockEl) : null;
-      dockInfo = (dcs ? dcs.display : "?") + "/" + dockEl.children.length + " kids \u00B7 " +
-        Math.round(dr.width) + "\u00D7" + Math.round(dr.height) + " @ " +
-        Math.round(dr.left) + "," + Math.round(dr.top) +
-        " \u00B7 Body " + (document.body.classList.contains("layout-dock") ? "dock" : "list");
-    }
-    var listEl = $("home-list"), listInfo = "n/a";
-    if (listEl) {
-      var lr = listEl.getBoundingClientRect();
-      var lcs = window.getComputedStyle ? getComputedStyle(listEl) : null;
-      listInfo = (lcs ? lcs.display : "?") + "/" + listEl.children.length + " kids \u00B7 " +
-        Math.round(lr.width) + "\u00D7" + Math.round(lr.height) + " @ " +
-        Math.round(lr.left) + "," + Math.round(lr.top) +
-        " \u00B7 Scroll " + listEl.scrollTop + "/" + listEl.scrollHeight;
-    }
-    diag.textContent = "Viewport " + window.innerWidth + "\u00D7" + window.innerHeight +
-      " \u00B7 Doc " + (document.documentElement ? document.documentElement.clientWidth : "?") +
-      " \u00B7 App " + (appEl ? appEl.offsetWidth : "?") +
-      " \u00B7 Bar " + (barEl ? barEl.offsetWidth : "?") +
-      " \u00B7 Fit " + tf +
-      " \u00B7 DPR " + (window.devicePixelRatio || 1) +
-      " \u00B7 Screen " + window.screen.width + "\u00D7" + window.screen.height +
-      " \u00B7 Pins " + state.pinned.length +
-      " \u00B7 Prefs " + prefs.layout + "/" + prefs.appsDisplay + "/" + prefs.material + "/" + prefs.background +
-      "\nList " + listInfo +
-      "\nDock " + dockInfo;
-  }
 }
 
 function changeVolume(delta) {
@@ -1319,7 +1303,7 @@ function bindUI() {
       state.lastFocus[name] = e.target;
     }
     if (e.target.closest) {
-      var scroller = e.target.closest(".homelist") || e.target.closest(".appstore");
+      var scroller = e.target.closest(".homelist") || e.target.closest(".appstore") || e.target.closest("#view-settings .plate");
       if (scroller) revealIn(scroller, e.target);
     }
     if (state.arranging) markGrabbed();
