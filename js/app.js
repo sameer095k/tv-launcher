@@ -913,7 +913,7 @@ function openPanel(panelId, label) {
   }
   try {
     TZ.application.launch("com.samsung.tv.csfs",
-      function () { setTimeout(launchPanel, 900); },
+      function () { setTimeout(launchPanel, 2500); },
       function () { launchPanel(); });
   } catch (e) { launchPanel(); }
 }

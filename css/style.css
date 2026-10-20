@@ -225,15 +225,16 @@ body.controls-text .top-btn,body.controls-both .top-btn{
 
 /* ---------- Dock layout ---------- */
 .dock{
-  /* v1.7: full-width bar, slots centered with justify-content. Every
-   * sizing trick tried so far rendered invisible on the TV while the
-   * simple preview dock showed fine — v1.5: transform centering +
-   * backdrop-filter; v1.6: max-content width + auto margins + a CSS
-   * variable background. This version uses none of them: fixed
-   * left/right insets, a literal rgba background, no transform, no
-   * filter. (applyPrefs also sets the dock's display inline as a
+  /* v1.8: explicit geometry, CleanFrame-style — left/top/width/height,
+   * all in px. Every other anchoring scheme rendered invisible on
+   * the TV while top-anchored elements (list, topbar, plates) paint
+   * fine: v1.5 transform centering + backdrop-filter, v1.6 max-content
+   * + auto margins, v1.7 left/right insets + bottom anchoring. The
+   * dock was the only bottom-anchored element in the app. Explicit
+   * z-index too, to rule out stacking against the scrim.
+   * (applyPrefs also sets the dock's display inline as a
    * belt-and-braces override of the body-class rule.) */
-  position:absolute;left:120px;right:120px;bottom:52px;
+  position:absolute;left:120px;top:874px;width:1680px;height:154px;z-index:30;
   display:none;justify-content:center;gap:8px;padding:18px 22px;border-radius:30px;
   background:rgba(10,15,20,.55);border:1px solid rgba(255,255,255,.35);
   box-shadow:0 18px 50px rgba(0,0,0,.35);
