@@ -198,6 +198,31 @@ function esc(s) {
   });
 }
 
+/* Scroll a focusable into view inside a bounded scroll container
+ * (.homelist / .appstore). overflow:hidden containers still accept
+ * scrollTop writes, so focus-driven scrolling needs no visible
+ * scrollbar — the focused row is always brought inside the window.
+ * v1.7: math in layout coordinates (offsetTop / clientHeight), not
+ * getBoundingClientRect — rects are post-transform (fitStage) pixels
+ * while scrollTop is layout pixels, and mixing the two units can
+ * shove the content out of the window entirely. The result is also
+ * clamped to the container's real scroll range. */
+function revealIn(container, el) {
+  try {
+    var top = el.offsetTop, h = el.offsetHeight;
+    if (!h) return;
+    var winTop = container.scrollTop, winBot = winTop + container.clientHeight;
+    var target = winTop;
+    if (top < winTop + 4) target = top - 14;
+    else if (top + h > winBot - 4) target = top + h - container.clientHeight + 14;
+    var max = container.scrollHeight - container.clientHeight;
+    if (max < 0) max = 0;
+    if (target < 0) target = 0;
+    if (target > max) target = max;
+    container.scrollTop = target;
+  } catch (e) {}
+}
+
 var toastTimer = null;
 function toast(msg, ms) {
   var t = $("toast");
@@ -489,6 +514,13 @@ function applyPrefs() {
   var solid = (bg === "dark" || bg === "light");
   b.classList.toggle("layout-dock", prefs.layout === "dock");
   b.classList.toggle("layout-list", prefs.layout !== "dock");
+  // Belt-and-braces (v1.7): set the two home containers' display
+  // inline too. If the TV's engine ever drops or mishandles the
+  // body-class stylesheet rules above, the inline styles still put
+  // exactly one of list/dock on screen.
+  var dockEl0 = $("home-dock"), listEl0 = $("home-list");
+  if (dockEl0) dockEl0.style.display = prefs.layout === "dock" ? "flex" : "none";
+  if (listEl0) listEl0.style.display = prefs.layout === "dock" ? "none" : "flex";
   b.classList.toggle("mode-icons", prefs.appsDisplay === "icons");
   b.classList.toggle("mode-text", prefs.appsDisplay === "text");
   b.classList.toggle("mode-both", prefs.appsDisplay === "both");
@@ -860,6 +892,32 @@ function launchById(id, label) {
   } catch (e) { toast("Couldn't open " + label + ": " + errText(e), 5000); }
 }
 
+/* Samsung's Settings and Apps are CoBA panels hosted by Samsung Home
+ * (com.samsung.tv.csfs) — launched cold from this launcher they accept
+ * the launch but never take the screen, and v1.4's hide-self trick just
+ * dumped the user onto Samsung's home bar (confirmed 2026-10-20). The
+ * v1.7 recipe mirrors how the panels are reached from Samsung Home
+ * itself: bring Samsung Home forward first, then launch the panel so
+ * its host is the foreground app when the request lands. */
+function openPanel(panelId, label) {
+  var st = $("set-status");
+  function note(msg) { if (st) st.textContent = msg; }
+  toast("Opening " + label + "\u2026");
+  note("Opening " + label + ": bringing Samsung Home forward first\u2026");
+  function launchPanel() {
+    try {
+      TZ.application.launch(panelId,
+        function () { note(label + " launched."); },
+        function (e) { note(label + " launch failed: " + errText(e)); toast(label + " failed: " + errText(e), 5000); });
+    } catch (e) { note(label + " launch threw: " + errText(e)); }
+  }
+  try {
+    TZ.application.launch("com.samsung.tv.csfs",
+      function () { setTimeout(launchPanel, 900); },
+      function () { launchPanel(); });
+  } catch (e) { launchPanel(); }
+}
+
 /* The broadcast player is org.tizen.tv-viewer (the TV's own boot/startup
  * app) — that is what Samsung's Home presents for Live TV: switch the
  * source to TV first, then launch the viewer. The coba.livetv component
@@ -1042,13 +1100,35 @@ function renderSettings() {
   if (diag) {
     var appEl = $("app"), barEl = $("topbar");
     var tf = (appEl && appEl.style.transform) ? appEl.style.transform : "none";
+    var dockEl = $("home-dock"), dockInfo = "n/a";
+    if (dockEl) {
+      var dr = dockEl.getBoundingClientRect();
+      var dcs = window.getComputedStyle ? getComputedStyle(dockEl) : null;
+      dockInfo = (dcs ? dcs.display : "?") + "/" + dockEl.children.length + " kids \u00B7 " +
+        Math.round(dr.width) + "\u00D7" + Math.round(dr.height) + " @ " +
+        Math.round(dr.left) + "," + Math.round(dr.top) +
+        " \u00B7 Body " + (document.body.classList.contains("layout-dock") ? "dock" : "list");
+    }
+    var listEl = $("home-list"), listInfo = "n/a";
+    if (listEl) {
+      var lr = listEl.getBoundingClientRect();
+      var lcs = window.getComputedStyle ? getComputedStyle(listEl) : null;
+      listInfo = (lcs ? lcs.display : "?") + "/" + listEl.children.length + " kids \u00B7 " +
+        Math.round(lr.width) + "\u00D7" + Math.round(lr.height) + " @ " +
+        Math.round(lr.left) + "," + Math.round(lr.top) +
+        " \u00B7 Scroll " + listEl.scrollTop + "/" + listEl.scrollHeight;
+    }
     diag.textContent = "Viewport " + window.innerWidth + "\u00D7" + window.innerHeight +
       " \u00B7 Doc " + (document.documentElement ? document.documentElement.clientWidth : "?") +
       " \u00B7 App " + (appEl ? appEl.offsetWidth : "?") +
       " \u00B7 Bar " + (barEl ? barEl.offsetWidth : "?") +
       " \u00B7 Fit " + tf +
       " \u00B7 DPR " + (window.devicePixelRatio || 1) +
-      " \u00B7 Screen " + window.screen.width + "\u00D7" + window.screen.height;
+      " \u00B7 Screen " + window.screen.width + "\u00D7" + window.screen.height +
+      " \u00B7 Pins " + state.pinned.length +
+      " \u00B7 Prefs " + prefs.layout + "/" + prefs.appsDisplay + "/" + prefs.material + "/" + prefs.background +
+      "\nList " + listInfo +
+      "\nDock " + dockInfo;
   }
 }
 
@@ -1185,25 +1265,11 @@ function bindUI() {
   }
   var os = $("open-settings");
   if (os) os.addEventListener("click", function () {
-    var st = $("set-status");
-    if (st) st.textContent = "Launching Samsung Settings (com.samsung.tv.coba.setting)\u2026";
-    try {
-      TZ.application.launch("com.samsung.tv.coba.setting",
-        function () {
-          if (st) st.textContent = "Launch accepted — handing the screen to Settings\u2026";
-          // The coba Settings app starts but stays behind this launcher
-          // (launch reports success, nothing appears). Hide ourselves so
-          // it can take the screen; Return in Settings comes back here.
-          setTimeout(function () {
-            try {
-              if (TZ.application.getCurrentApplication) {
-                TZ.application.getCurrentApplication().hide();
-              }
-            } catch (e) {}
-          }, 600);
-        },
-        function (e) { if (st) st.textContent = "Settings launch failed: " + errText(e); });
-    } catch (e) { if (st) st.textContent = "Settings launch threw: " + errText(e); }
+    openPanel("com.samsung.tv.coba.setting", "TV Settings");
+  });
+  var oas = $("open-apps-store");
+  if (oas) oas.addEventListener("click", function () {
+    openPanel("com.samsung.tv.coba.apps", "Samsung Apps");
   });
   window.addEventListener("resize", fitStage);
   var vu = $("vol-up");
@@ -1217,6 +1283,10 @@ function bindUI() {
     if (view) {
       var name = view.id.replace("view-", "");
       state.lastFocus[name] = e.target;
+    }
+    if (e.target.closest) {
+      var scroller = e.target.closest(".homelist") || e.target.closest(".appstore");
+      if (scroller) revealIn(scroller, e.target);
     }
     if (state.arranging) markGrabbed();
     // Browsing wallpaper thumbs previews them in the preview pane;
