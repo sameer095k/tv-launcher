@@ -2,7 +2,7 @@
 <widget xmlns="http://www.w3.org/ns/widgets" xmlns:tizen="http://tizen.org/ns/widgets"
     id="https://sameer.tv/launcher" version="1.0.0" viewmodes="maximized">
     <access origin="*" subdomains="true"/>
-    <tizen:application id="SameerTVHome.Launcher" package="SameerTVHome" required_version="8.0"/>
+    <tizen:application id="SameerTV01.Launcher" package="SameerTV01" required_version="3.0"/>
     <content src="index.html"/>
     <icon src="icon.png"/>
     <name>Sameer TV Launcher</name>
