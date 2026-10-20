@@ -7,38 +7,41 @@
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+<div id="wallpaper"></div>
+<div id="scrim"></div>
 <div id="app">
-  <aside id="sidebar">
-    <div class="brand">
-      <span class="brand-mark">STV</span>
-      <span class="brand-name">Sameer TV</span>
-    </div>
-    <nav id="side-nav">
-      <button class="side-item focusable" data-view="apps" type="button"><span class="ico">&#x25A6;</span><span>Apps</span></button>
-      <button class="side-item focusable" data-view="livetv" type="button"><span class="ico">&#x1F4E1;</span><span>Live TV</span></button>
-      <button class="side-item focusable" data-view="settings" type="button"><span class="ico">&#x2699;</span><span>Settings</span></button>
-    </nav>
-    <div class="side-foot">
+  <header id="topbar">
+    <div class="clockbox">
       <div id="clock">--:--</div>
-      <div class="noads">&#x2713; No ads</div>
+      <div id="date"></div>
     </div>
-  </aside>
+    <div class="top-actions">
+      <button class="top-btn focusable" data-view="allapps" type="button" title="All apps">&#x25A6;</button>
+      <button class="top-btn focusable" data-view="settings" type="button" title="Settings">&#x2699;</button>
+    </div>
+  </header>
   <main id="main">
-    <section id="view-apps" class="view active" aria-label="Apps">
-      <h1 class="view-title">Apps</h1>
-      <div id="home-grid" class="grid"></div>
+    <section id="view-apps" class="view active" aria-label="Home">
+      <div id="home-list" class="homelist"></div>
     </section>
     <section id="view-livetv" class="view" aria-label="Live TV">
       <h1 class="view-title">Live TV <span class="subtitle">Antenna</span></h1>
       <div id="channel-grid" class="channels"></div>
       <p class="hint">Select a channel to tune the antenna</p>
     </section>
+    <section id="view-allapps" class="view" aria-label="All apps">
+      <div class="plate">
+        <h1 class="view-title">All apps</h1>
+        <div id="appstore-list" class="appstore"></div>
+      </div>
+    </section>
     <section id="view-settings" class="view" aria-label="Settings">
-      <h1 class="view-title">Settings</h1>
-      <h2 class="section-title">App Store</h2>
-      <div id="appstore-list" class="appstore"></div>
-      <h2 class="section-title">Inputs</h2>
-      <div id="inputs-row" class="inputs"></div>
+      <div class="plate">
+        <h1 class="view-title">Settings</h1>
+        <h2 class="section-title">Inputs</h2>
+        <div id="inputs-row" class="inputs"></div>
+        <p class="hint">&#x2713; No ads &middot; Sameer TV Launcher</p>
+      </div>
     </section>
   </main>
 </div>
