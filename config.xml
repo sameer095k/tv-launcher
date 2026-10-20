@@ -1,17 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <widget xmlns="http://www.w3.org/ns/widgets" xmlns:tizen="http://tizen.org/ns/widgets"
-    id="sameer.tvlauncher" version="1.0.0" viewmodes="maximized">
+    id="https://sameer.tv/launcher" version="1.0.0" viewmodes="maximized">
     <access origin="*" subdomains="true"/>
-    <tizen:application id="sameer.tvlauncher" package="sameer.tvlauncher" required_version="8.0"/>
+    <tizen:application id="SameerTVHome.Launcher" package="SameerTVHome" required_version="8.0"/>
     <content src="index.html"/>
     <icon src="icon.png"/>
     <name>Sameer TV Launcher</name>
     <description>Ad-free custom home screen for Samsung Tizen TV</description>
     <author>Sameer</author>
+    <tizen:profile name="tv-samsung"/>
     <tizen:privilege name="http://tizen.org/privilege/application.launch"/>
     <tizen:privilege name="http://tizen.org/privilege/tv.channel"/>
     <tizen:privilege name="http://tizen.org/privilege/tv.window"/>
     <tizen:privilege name="http://tizen.org/privilege/tv.inputdevice"/>
     <tizen:feature name="http://tizen.org/feature/tv"/>
+    <tizen:setting screen-orientation="landscape" context-menu="disable" background-support="disable" encryption="disable" install-location="auto" hwkey-event="enable"/>
     <tizen:metadata key="http://samsung.com/tv/metadata/multitasking.support" value="true"/>
 </widget>
