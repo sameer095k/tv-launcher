@@ -101,7 +101,7 @@ var DEFAULT_KEYWORDS = [
   { id: "UdGpKNSRmw.NFL",        kw: "nfl",     label: "NFL" },
   { id: "9Ur5IzDKqV.TizenYouTube", kw: "youtube", label: "YouTube" },
   { id: "instantbit.webvideocaster", kw: "video cast", label: "Web Video Caster" },
-  { id: "", kw: "nuvio", label: "Nuvio" },
+
   { id: "xvvl3S1TT1.TizenTubeStandalone", kw: "tizentube", label: "TizenTube" }
 ];
 var LIVETV_ID = "com.samsung.tv.coba.livetv";
@@ -324,7 +324,7 @@ function savePinned() {
 /* When a new home default is added in an update, append it once to an
  * existing saved pin list (marker version below) — never re-add after
  * that, so a default he unpins stays unpinned. */
-var DEFAULTS_VERSION = 6; // v1.13: TizenBrew pin removed at his request (purge below runs once)
+var DEFAULTS_VERSION = 7; // v1.14: Nuvio uninstalled at his request (purge below runs once)
 function defaultsVersion() {
   try { return parseInt(localStorage.getItem("stv_defaults_v") || "0", 10) || 0; }
   catch (e) { return 0; }
@@ -347,10 +347,11 @@ function loadPinned() {
     });
     setDefaultsVersion();
   } else if (defaultsVersion() < DEFAULTS_VERSION) {
-    // One-time purges: Stremio (v1.12) and TizenBrew (v1.13) pins go away for good.
+    // One-time purges: Stremio (v1.12), TizenBrew (v1.13), Nuvio (v1.14) pins go away for good.
     pinned = pinned.filter(function (p) {
       return p !== "kw:stremio" && p !== "IkWsFHtOY9.Stremio" &&
-             p !== "kw:tizenbrew" && p !== "xvvl3S1bvH.TizenBrewStandalone";
+             p !== "kw:tizenbrew" && p !== "xvvl3S1bvH.TizenBrewStandalone" &&
+             p !== "kw:nuvio" && p !== "NuvioTV001.NuvioTV";
     });
     DEFAULT_KEYWORDS.forEach(function (d) {
       var app = (d.id && findAppById(d.id)) || findAppByKeyword(d.kw);
