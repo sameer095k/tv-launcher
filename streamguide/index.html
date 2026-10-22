@@ -240,7 +240,7 @@
 
 <div class="view" id="view-search">
   <div id="sLeft">
-    <div id="qbox">Search: <span class="q" id="qtext"></span><span class="hint">pick letters — results update as you type</span></div>
+    <div id="qbox">Search: <span class="q" id="qtext"></span></div>
     <div id="keys"></div>
   </div>
   <div id="sRightBar"><div id="sfilterbar"></div></div>
@@ -280,7 +280,7 @@
 
 <div class="plate" id="plate-trailer">
   <div id="tFrameWrap"></div>
-  <div id="tMsg">OK = play/pause · ◀ ▶ = seek · Back = close</div>
+  <div id="tMsg"></div>
   <div id="tBtns" style="display:none">
     <span class="dbtn" data-act="tyt">Open in YouTube</span>
     <span class="dbtn" data-act="tclose">Close</span>
@@ -683,11 +683,11 @@ function renderHomePlaceholders() {
 var SVC_FILTER = { monetizationTypes: ["FLATRATE"], packages: ["nfx", "dnp", "amp"] };
 function svcFilter(extra) { var f = { objectTypes: ["MOVIE", "SHOW"] }; for (var k in SVC_FILTER) f[k] = SVC_FILTER[k]; if (extra) for (var k2 in extra) f[k2] = extra[k2]; return f; }
 var ROW_DEFS = [
-  { label: "Top 25 This Week", sub: "trending + popular · on your services", custom: "top25" },
-  { label: "New Movies", sub: "just out, on your services", sort: "RELEASE_YEAR", minYear: 2025, floorScore: 5.8, scoredFirst: true, filter: svcFilter({ objectTypes: ["MOVIE"] }), first: 32, cap: 16 },
-  { label: "New Series", sub: "just out, on your services", sort: "RELEASE_YEAR", minYear: 2025, floorScore: 5.8, scoredFirst: true, filter: svcFilter({ objectTypes: ["SHOW"] }), first: 32, cap: 16 },
-  { label: "Recent & Acclaimed", sub: "2024 and newer · IMDb 7.2+", sort: "TMDB_POPULARITY", minYear: 2024, requireScore: 7.2, filter: svcFilter({ releaseYear: { min: 2024 } }), first: 32, cap: 16 },
-  { label: "Popular on Your Services", sub: "the evergreen stuff", sort: "TMDB_POPULARITY", filter: svcFilter({}), first: 24, cap: 16 }
+  { label: "Top 25 This Week", custom: "top25" },
+  { label: "New Movies", sort: "RELEASE_YEAR", minYear: 2025, floorScore: 5.8, scoredFirst: true, filter: svcFilter({ objectTypes: ["MOVIE"] }), first: 32, cap: 16 },
+  { label: "New Series", sort: "RELEASE_YEAR", minYear: 2025, floorScore: 5.8, scoredFirst: true, filter: svcFilter({ objectTypes: ["SHOW"] }), first: 32, cap: 16 },
+  { label: "Recent & Acclaimed", sort: "TMDB_POPULARITY", minYear: 2024, requireScore: 7.2, filter: svcFilter({ releaseYear: { min: 2024 } }), first: 32, cap: 16 },
+  { label: "Popular on Your Services", sort: "TMDB_POPULARITY", filter: svcFilter({}), first: 24, cap: 16 }
 ];
 function postFilter(def, nodes) {
   var kept = nodes.filter(function (n) {
@@ -712,7 +712,7 @@ function postFilter(def, nodes) {
 }
 function renderRowInto(blk, def, nodes) {
   if (!blk) return;
-  blk.innerHTML = '<div class="rowlabel">' + esc(def.label) + (def.sub ? ' <span class="dim">' + esc(def.sub) + "</span>" : "") + "</div>" + (nodes.length ? stripHtml(nodes) : '<div class="empty">Nothing came back — check the connection.</div>');
+  blk.innerHTML = '<div class="rowlabel">' + esc(def.label) + (def.sub ? ' <span class="dim">' + esc(def.sub) + "</span>" : "") + "</div>" + (nodes.length ? stripHtml(nodes) : '<div class="empty">Nothing here.</div>');
 }
 function heroPick(nodes) { return nodes.filter(function (n) { return !isSeenNode(n); })[0] || nodes[0]; }
 /* ----- Top 25: TMDB Trending (global buzz) blended with Trakt Trending
@@ -726,7 +726,7 @@ function topStripHtml(nodes) {
 }
 function renderTop25Into(blk, nodes) {
   if (!blk) return;
-  blk.innerHTML = '<div class="rowlabel">Top ' + (nodes.length || 25) + ' This Week <span class="dim">trending + popular · on your services</span></div>' + (nodes.length ? topStripHtml(nodes) : '<div class="empty">Nothing came back — check the connection.</div>');
+  blk.innerHTML = '<div class="rowlabel">Top ' + (nodes.length || 25) + ' This Week</div>' + (nodes.length ? topStripHtml(nodes) : '<div class="empty">Nothing here.</div>');
 }
 function computeTopList(cfg) {
   var minCache = Math.floor(cfg.n * 0.8);
@@ -853,7 +853,7 @@ function loadBrowse() {
           renderTop25Into($("rowsWrap").children[ri + offset], nodes);
         }
         done++;
-        if (done === ROW_DEFS.length) { $("status").textContent = "Availability by JustWatch · Metadata by TMDB · OK = details · Back = close"; scheduleRebuild(); }
+        if (done === ROW_DEFS.length) { $("status").textContent = ""; scheduleRebuild(); }
       }); }, 900);
       return;
     }
@@ -866,7 +866,7 @@ function loadBrowse() {
       if (ri === 4 && nodes.length && !heroNode) setHero(heroPick(nodes));
       renderRowInto($("rowsWrap").children[ri + offset], def, nodes);
       done++;
-      if (done === ROW_DEFS.length) { $("status").textContent = "Availability by JustWatch · Metadata by TMDB · OK = details · Back = close"; scheduleRebuild(); }
+      if (done === ROW_DEFS.length) { $("status").textContent = ""; scheduleRebuild(); }
     }).catch(function () {
       done++;
       if (done === ROW_DEFS.length && !usedCache) {
@@ -902,12 +902,12 @@ function renderSection(key, nodes) {
   sec.shown = nodes;
   var wrap = $(sec.wrapId);
   var topHtml = sec.top && sec.top.length ?
-    '<div class="rowblk"><div class="rowlabel">Top ' + sec.top.length + (key === "movies" ? " Movies" : " Series") + ' <span class="dim">trending + popular · on your services</span></div>' + topStripHtml(sec.top) + "</div>" : "";
+    '<div class="rowblk"><div class="rowlabel">Top ' + sec.top.length + (key === "movies" ? " Movies" : " Series") + '</div>' + topStripHtml(sec.top) + "</div>" : "";
   var moreHtml = !sec.exhausted && nodes.length >= (sec.want || 40) ?
     '<div class="rowblk"><div style="margin-left:72px"><span class="dbtn loadmore" data-act="loadmore">Load more ▾</span></div></div>' : "";
   wrap.innerHTML = topHtml +
-    '<div class="rowblk"><div class="rowlabel">' + (key === "movies" ? "Movies" : "Series") + ' <span class="dim">' + nodes.length + " · " + esc(describeF()) + "</span></div></div>" +
-    (nodes.length ? gridHtml(nodes, 8) : '<div class="empty">Nothing matches those filters on your services.</div>') + moreHtml;
+    '<div class="rowblk"><div class="rowlabel">' + (key === "movies" ? "Movies" : "Series") + "</div></div>" +
+    (nodes.length ? gridHtml(nodes, 8) : '<div class="empty">Nothing matches those filters.</div>') + moreHtml;
 }
 function ensureSectionTop(key) {
   var sec = SEC[key];
@@ -939,8 +939,8 @@ function loadMore(key) {
     var prev = (sec.shown || []).length;
     registerNodes(nodes);
     SEC_CACHE[key + ":" + filterSig()] = { t: Date.now(), nodes: nodes };
-    if (nodes.length <= prev) { sec.exhausted = true; $("status").textContent = "That's everything matching those filters."; }
-    else $("status").textContent = "Availability by JustWatch · Metadata by TMDB · OK = details · Back = close";
+    if (nodes.length <= prev) { sec.exhausted = true; $("status").textContent = "That's everything."; }
+    else $("status").textContent = "";
     renderSection(key, nodes);
     if (screen === key) rebuildBands(true);
   }).catch(function () { sec.loadingMore = false; $("status").textContent = "Load more failed — connection?"; });
@@ -993,7 +993,7 @@ function renderRecentSearches() {
 var SEARCH_CACHE = {};
 function renderSearchResults(nodes) {
   $("sresults").innerHTML = nodes.length
-    ? '<div class="rowblk"><div class="rowlabel">Results <span class="dim">' + nodes.length + " · " + esc(describeF()) + "</span></div></div>" + gridHtml(nodes, 5, true)
+    ? '<div class="rowblk"><div class="rowlabel">Results</div></div>' + gridHtml(nodes, 5, true)
     : '<div class="empty noindent">No matches for “' + esc(query) + "” with those filters.</div>";
 }
 function runSearch() {
@@ -1584,28 +1584,28 @@ function renderTrakt() {
   if (!TRAKT_ON) { w.innerHTML = '<div class="empty">Trakt is not configured in this build.</div>'; return; }
   if (traktConn) {
     w.innerHTML =
-      '<div class="rowblk"><div class="rowlabel">Connect Trakt</div><div class="ttext">On your phone or computer, go to <b>auth.trakt.tv/activate</b> and enter this code:</div><div class="bigcode">' + esc(traktConn.user) + '</div><div class="ttext">Waiting for your approval… the code expires in about 10 minutes.</div></div>' +
+      '<div class="rowblk"><div class="rowlabel">Connect Trakt</div><div class="ttext">On your phone or computer, go to <b>auth.trakt.tv/activate</b> and enter this code:</div><div class="bigcode">' + esc(traktConn.user) + '</div></div>' +
       '<div class="rowblk"><div style="margin-left:72px"><span class="dbtn" data-act="tccancel">Cancel</span></div></div>';
     return;
   }
   if (!traktTok) {
     w.innerHTML =
-      '<div class="rowblk"><div class="rowlabel">Trakt</div><div class="ttext">Connect your Trakt account and Stream Guide keeps your watched history and Maybe List in sync everywhere — and Home gets a Recommended For You row built from what you actually watch. Your Netflix history import is already in Trakt waiting.</div></div>' +
+      '<div class="rowblk"><div class="rowlabel">Trakt</div></div>' +
       '<div class="rowblk"><div style="margin-left:72px"><span class="dbtn" data-act="tconnect">Connect Trakt</span></div></div>';
     return;
   }
   var h =
-    '<div class="rowblk"><div class="rowlabel">Trakt <span class="dim">connected</span></div><div class="ttext">Signed in as <b>' + esc(traktUser || "…") + '</b><br/>In your Trakt history: ' + traktWatched.movie.length + " movies · " + traktWatched.show.length + ' shows · ' + ((traktWatchlist && traktWatchlist.length) || 0) + ' on your watchlist.<br/>Seen and Maybe changes you make here sync to Trakt automatically.</div></div>' +
+    '<div class="rowblk"><div class="rowlabel">Trakt</div><div class="ttext">Signed in as <b>' + esc(traktUser || "…") + '</b><br/>In your Trakt history: ' + traktWatched.movie.length + " movies · " + traktWatched.show.length + ' shows · ' + ((traktWatchlist && traktWatchlist.length) || 0) + ' on your watchlist.</div></div>' +
     '<div class="rowblk"><div style="margin-left:72px"><span class="dbtn" data-act="tsync">Sync now</span> <span class="dbtn" data-act="tdisc">Disconnect</span></div></div>';
   if (traktCal && traktCal.up && traktCal.up.length)
-    h += '<div class="rowblk"><div class="rowlabel">Coming Up <span class="dim">new episodes of your shows · next 31 days</span></div>' + epStripHtml(traktCal.up) + "</div>";
+    h += '<div class="rowblk"><div class="rowlabel">Coming Up</div>' + epStripHtml(traktCal.up) + "</div>";
   if (traktCal && traktCal.newS && traktCal.newS.length)
-    h += '<div class="rowblk"><div class="rowlabel">New Season Out <span class="dim">premiered in the last 75 days · beyond where you left off</span></div>' + tmdbStripHtml(traktCal.newS) + "</div>";
+    h += '<div class="rowblk"><div class="rowlabel">New Season Out</div>' + tmdbStripHtml(traktCal.newS) + "</div>";
   if (traktShows.length) {
     var sorted = traktShows.slice().sort(function (a, b) { return (b.last || "") < (a.last || "") ? -1 : 1; });
-    h += '<div class="rowblk"><div class="rowlabel">Your Shows <span class="dim">' + sorted.length + ' in your Trakt history · most recently watched first</span></div>' + tmdbStripHtml(sorted.map(function (e) { return { tid: e.tid, type: "tv", title: e.title, year: e.year, poster: e.poster }; })) + "</div>";
+    h += '<div class="rowblk"><div class="rowlabel">Your Shows</div>' + tmdbStripHtml(sorted.map(function (e) { return { tid: e.tid, type: "tv", title: e.title, year: e.year, poster: e.poster }; })) + "</div>";
   } else if (!traktCal)
-    h += '<div class="rowblk"><div class="ttext">Syncing your library… hit Sync now if this stays empty.</div></div>';
+    h += '<div class="rowblk"><div class="ttext">Syncing your library…</div></div>';
   w.innerHTML = h;
 }
 function renderDetailBtns() {
@@ -2126,12 +2126,12 @@ function gameCard(g) {
   return '<div class="gcard' + (a.kind === "none" ? " dim" : "") + '"' + attrs + ">" +
     '<div class="gc-top"><span class="gleague">' + g.league.name + '</span><span class="gnet ' + a.cls + '">' + esc(a.chip) + "</span></div>" +
     '<div class="gteams">' + teamRow(g.away, g.home, g.state) + teamRow(g.home, g.away, g.state) + "</div>" +
-    '<div class="gc-bot"><span class="gstat' + (live ? "" : " soon") + '">' + esc(stat) + '</span><span class="gact">' + esc(a.act) + "</span></div></div>";
+    '<div class="gc-bot"><span class="gstat' + (live ? "" : " soon") + '">' + esc(stat) + "</span></div></div>";
 }
 function redzoneCard(anyLive) {
   return '<div class="gcard rz" data-act="redzone"><div class="gc-top"><span class="gleague">NFL</span><span class="gnet">NFL APP</span></div>' +
-    '<div class="rz-title">NFL <span>REDZONE</span></div><div class="rz-sub">' + (anyLive ? "Live now · every Sunday game, whip-around" : "Sundays · every game, whip-around") + "</div>" +
-    '<div class="gc-bot"><span class="gstat">' + (anyLive ? "● LIVE" : "SUNDAY") + '</span><span class="gact">OK → NFL app · your NFL+ Premium</span></div></div>';
+    '<div class="rz-title">NFL <span>REDZONE</span></div>' +
+    '<div class="gc-bot"><span class="gstat">' + (anyLive ? "● LIVE" : "SUNDAY") + "</span></div></div>";
 }
 function renderSports(results) {
   var byLeague = {}, live = [];
@@ -2143,7 +2143,7 @@ function renderSports(results) {
     games.forEach(function (g) { if (g.state === "in") live.push(g); });
   });
   var h = "";
-  if (live.length) h += '<div class="rowblk"><div class="rowlabel"><span style="color:#ff4d4d">●</span> Live Now <span class="dim">' + live.length + (live.length === 1 ? " game" : " games") + '</span></div><div class="strip"><div class="stripInner">' + live.map(gameCard).join("") + "</div></div></div>";
+  if (live.length) h += '<div class="rowblk"><div class="rowlabel"><span style="color:#ff4d4d">●</span> Live Now </div><div class="strip"><div class="stripInner">' + live.map(gameCard).join("") + "</div></div></div>";
   var now = new Date();
   var isSunday = now.getDay() === 0;
   var hourNow = now.getHours() + now.getMinutes() / 60;
@@ -2154,9 +2154,9 @@ function renderSports(results) {
       cards = redzoneCard((byLeague.nfl || []).some(function (g) { return g.state === "in"; })) + cards;
     }
     if (!cards) return;
-    h += '<div class="rowblk"><div class="rowlabel">' + l.name + ' <span class="dim">Today</span></div><div class="strip"><div class="stripInner">' + cards + "</div></div></div>";
+    h += '<div class="rowblk"><div class="rowlabel">' + l.name + '</div><div class="strip"><div class="stripInner">' + cards + "</div></div></div>";
   });
-  if (!h) h = '<div class="sportsmsg">No games today across your leagues.</div>';
+  if (!h) h = '<div class="sportsmsg">No games today.</div>';
   $("sportsWrap").innerHTML = h;
 }
 function loadSports(isRefresh) {
