@@ -194,3 +194,15 @@ the "No ads" tagline, channel-tile sub-labels, and the Samsung-bar
 explainer texts. Transient state (progress, errors, tuning) stays —
 it is not a label. Also standing: elevate UX, DX and AX together,
 without breaking anything.
+
+## Stream Guide v2.10.0 — design-system pass (2026-10-22)
+
+- The deferred Hallmark refactor, done as a pure rename: every color and the font stack in the stylesheet now resolve through :root tokens (74 literals -> named tokens: --ink-2..17 text steps, --panel/--skel surfaces, --scrim-*/--w*/--gold-* alpha families, service brands --nfx/--dnp/--amp). Verified in-file: zero literals outside :root, no undefined var() references. Sloplint FAILs 135 -> 6 (the rest are web-page categories + two rule-48 stragglers in JS strings).
+- The one visual change: the app background is flat var(--bg) — the radial wash is gone; depth comes from the stepped flat panels + hairlines, per Hallmark gate 29. Render-checked against the v2.9.0 cards: identical but for the corner glow.
+- Scrim verdict on inspection: the hero shade already follows the imagery rule (ink-toned, text-edge weighted, 93
+## Stream Guide v2.10.0 — design-system pass (2026-10-22)
+
+- The deferred Hallmark refactor, done as a pure rename: every color and the font stack in the stylesheet now resolve through :root tokens (74 literals to named tokens: --ink-2..17 text steps, --panel/--skel surfaces, --scrim-*/--w*/--gold-* alpha families, service brands --nfx/--dnp/--amp). Verified in the written file: zero literals outside :root, no undefined var() references. Sloplint FAILs 135 to 6 (the rest are web-page categories plus two rule-48 stragglers in JS strings).
+- The one visual change: the app background is flat var(--bg) — the radial wash is gone; depth comes from the stepped flat panels + hairlines, per Hallmark gate 29. Render-checked against the v2.9.0 cards: identical but for the corner glow.
+- Scrim verdict on inspection: the hero shade already follows the imagery rule (ink-toned, text-edge weighted, 93% to 18%); left as is.
+- Ship-script lesson, learned the expensive way: a Python str.replace() on a string you already mutated in memory silently no-ops. Splice by index, and verify the result in the written file, never in the variable.
