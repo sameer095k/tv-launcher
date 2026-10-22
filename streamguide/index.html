@@ -1,0 +1,2277 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=1920, height=1080"/>
+<title>Stream Guide</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body { width:1920px; height:1080px; overflow:hidden; background:#0b0e14; }
+  @font-face { font-family:'Manrope'; src:url('fonts/manrope.woff2') format('woff2'); font-weight:200 800; }
+  body { font-family:'Manrope', "Segoe UI", Roboto, Arial, sans-serif; color:#f2f4f8; }
+  #bg { position:absolute; left:0; top:0; width:1920px; height:1080px;
+        background: radial-gradient(1200px 700px at 85% -10%, #1d2a44 0%, #0b0e14 60%); }
+  /* ---------- header ---------- */
+  #hdr { position:absolute; left:0; top:0; width:1920px; height:150px; z-index:5; }
+  #greet { position:absolute; left:72px; top:34px; font-size:44px; font-weight:600; letter-spacing:.2px; }
+  #subline { position:absolute; left:74px; top:96px; font-size:24px; color:#9fb0c9; }
+  #clockbox { position:absolute; right:72px; top:30px; text-align:right; }
+  #clock { font-size:44px; font-weight:600; }
+  #wx { font-size:25px; color:#cfe0f5; margin-top:6px; }
+  /* ---------- trakt ---------- */
+  .ttext { margin:0 72px; font-size:30px; line-height:1.5; color:#cfd8dc; max-width:1450px; }
+  .bigcode { margin:12px 72px; font-size:96px; font-weight:800; letter-spacing:14px; color:#fff; }
+  /* ---------- tabs ---------- */
+  #tabs { position:absolute; left:72px; top:168px; height:64px; z-index:5; }
+  .tab { display:inline-block; padding:12px 30px; margin-right:16px; border-radius:32px;
+         background:rgba(255,255,255,.07); color:#dbe4f2; font-size:26px; }
+  .tab.on { background:#e8edf5; color:#0b0e14; font-weight:700; }
+  .tab.focused { box-shadow:0 0 0 2px #0b0e14, 0 0 0 6px #ffd34d; }
+  /* ---------- views & scrolling wraps ---------- */
+  .view { position:absolute; left:0; top:252px; width:1920px; height:828px; overflow:hidden; display:none; }
+  .view.on { display:block; }
+  .vwrap { position:absolute; left:0; width:1920px; }
+  /* ---------- hero ---------- */
+  .heroblk { position:relative; width:1920px; height:472px; overflow:hidden; margin-bottom:18px; background:#10151f; }
+  .heroBg { position:absolute; left:0; top:-140px; width:1920px; height:760px; object-fit:cover; opacity:.5; }
+  .heroShade { position:absolute; left:0; top:0; width:1920px; height:472px;
+               background:linear-gradient(90deg, rgba(6,8,13,.93) 30%, rgba(6,8,13,.45) 65%, rgba(6,8,13,.18)); }
+  .heroContent { position:absolute; left:72px; bottom:52px; width:1180px; }
+  .heroKick { font-size:22px; letter-spacing:3px; color:#ffd34d; font-weight:700; margin-bottom:14px; }
+  .heroTitle { font-size:64px; font-weight:800; line-height:1.05; }
+  .heroMeta { margin-top:14px; font-size:26px; color:#cfe0f5; }
+  .heroMeta .star { color:#ffd34d; }
+  .heroDesc { margin-top:12px; font-size:24px; line-height:1.45; color:#aebdd4; width:1020px;
+              max-height:72px; overflow:hidden; }
+  .heroBtns { margin-top:24px; }
+  .heroPoster { position:absolute; right:130px; top:52px; width:224px; height:323px; border-radius:16px;
+                overflow:hidden; box-shadow:0 14px 30px rgba(0,0,0,.55); background:#1a2233; }
+  .heroPoster img { width:224px; height:323px; object-fit:cover; }
+  .skelhero { width:1920px; height:472px; background:linear-gradient(100deg, #131926 40%, #1d2739 50%, #131926 60%); background-size:200% 100%; animation:sksweep 1.15s linear infinite; }
+  /* ---------- rows & cards ---------- */
+  .rowblk { margin:0 0 26px 0; }
+  .rowlabel { margin:0 0 12px 72px; font-size:29px; font-weight:600; color:#eef2f9; }
+  .rowlabel .dim { color:#8fa2bd; font-weight:400; font-size:24px; }
+  .strip { position:relative; height:382px; overflow:hidden; }
+  .stripInner { position:absolute; left:0; top:0; height:382px; white-space:nowrap; padding-left:72px;
+                padding-top:12px; }
+  .stripInner.noindent { padding-left:2px; }
+  .card { display:inline-block; vertical-align:top; width:208px; margin-right:22px; }
+  .poster { position:relative; width:208px; height:300px; border-radius:14px; overflow:hidden;
+            background:#1a2233; }
+  .poster img { width:208px; height:300px; object-fit:cover; display:block; }
+  .poster .noposter { padding:26px 16px; font-size:23px; color:#aebdd4; white-space:normal; line-height:1.35; }
+  .rankno { position:absolute; left:4px; bottom:-12px; z-index:3; font-size:96px; font-weight:800; line-height:1; color:rgba(8,12,22,.88); -webkit-text-stroke:3px #dfe8fa; }
+  .eplabel { position:absolute; left:0; right:0; bottom:0; z-index:3; padding:30px 10px 8px; background:linear-gradient(rgba(0,0,0,0), rgba(0,0,0,.88)); color:#fff; font-size:19px; font-weight:600; line-height:1.3; }
+  .eplabel .et { display:block; font-weight:400; font-size:17px; color:#c9d6ea; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .eplabel .prem { color:#ffd34d; }
+  .card.focused .poster { box-shadow:0 0 0 3px #0b0e14, 0 0 0 7px #ffd34d; z-index:3; }
+  .score { position:absolute; right:8px; top:8px; background:rgba(5,8,14,.82); color:#ffd34d;
+           font-size:20px; padding:3px 9px; border-radius:9px; }
+  .badges { position:absolute; left:8px; bottom:8px; }
+  .bdg { display:inline-block; min-width:34px; text-align:center; padding:3px 7px; margin-right:6px;
+         border-radius:8px; font-size:19px; font-weight:700; color:#fff; }
+  .bdg.nfx { background:#b00610; } .bdg.dnp { background:#1f3fbf; } .bdg.amp { background:#e47911; }
+  .ctitle { margin-top:9px; font-size:21px; color:#dfe7f3; white-space:nowrap; overflow:hidden;
+            text-overflow:ellipsis; width:208px; }
+  .cyear { font-size:19px; color:#a7b8d0; }
+  .skel { display:inline-block; width:208px; height:300px; border-radius:14px;
+          background:linear-gradient(100deg, #161d2c 40%, #232f47 50%, #161d2c 60%); background-size:200% 100%;
+          margin-right:22px; animation:sksweep 1.15s linear infinite; }
+  @keyframes sksweep { from { background-position:120% 0; } to { background-position:-80% 0; } }
+  @keyframes skpulse { from { opacity:.45; } to { opacity:1; } }
+  .card.sm { width:132px; margin-right:18px; }
+  .card.sm .poster { width:132px; height:190px; border-radius:10px; }
+  .card.sm .poster img { width:132px; height:190px; }
+  .card.sm .score { font-size:16px; padding:2px 6px; }
+  .card.sm .bdg { min-width:26px; font-size:15px; padding:2px 5px; }
+  /* ---------- filter bars & chips ---------- */
+  .secbar { position:absolute; left:0; top:0; width:1920px; height:76px; }
+  .fbar { margin:8px 0 0 72px; }
+  .fbar.noindent { margin-left:0; }
+  .chip { display:inline-block; padding:11px 22px; margin-right:14px; border-radius:28px;
+          background:rgba(255,255,255,.07); color:#dbe4f2; font-size:23px; }
+  .chip b { color:#ffd34d; font-weight:700; }
+  .chip.focused { box-shadow:0 0 0 2px #0b0e14, 0 0 0 6px #ffd34d; background:rgba(255,255,255,.15); }
+  .chip.reset b { color:#ff9d7a; }
+  /* ---------- dropdown ---------- */
+  #ddmenu { position:absolute; min-width:308px; background:#151c2b; border:2px solid rgba(255,255,255,.20);
+            border-radius:14px; padding:8px; z-index:80; display:none; box-shadow:0 26px 64px rgba(0,0,0,.65); }
+  #ddmenu.on { display:block; }
+  .dditem { padding:12px 18px; font-size:25px; border-radius:9px; color:#dbe4f2; white-space:nowrap; }
+  .dditem .ddcheck { float:right; color:#ffd34d; margin-left:26px; }
+  .dditem.focused { background:rgba(255,211,77,.20); color:#fff; font-weight:700; }
+  .dditem.focused .ddcheck { color:#ffd34d; }
+  /* ---------- search (two-column) ---------- */
+  #sLeft { position:absolute; left:72px; top:6px; width:630px; }
+  #qbox { font-size:32px; margin-bottom:22px; }
+  #qbox .q { color:#ffd34d; font-weight:700; }
+  #qbox .hint { display:block; color:#8fa2bd; font-size:22px; margin-top:8px; }
+  .key { display:inline-block; width:52px; height:56px; line-height:56px; text-align:center; margin:0 8px 10px 0;
+         border-radius:11px; background:rgba(255,255,255,.08); font-size:22px; }
+  .key.wide { width:112px; font-size:20px; }
+  .key.focused { box-shadow:0 0 0 2px #0b0e14, 0 0 0 6px #ffd34d; background:rgba(255,255,255,.16); }
+  #sRightBar { position:absolute; left:760px; top:0; width:1160px; height:76px; }
+  #sresultsWrap { left:760px; top:84px; width:1160px; }
+  #sresultsWrap .rowlabel { margin-left:2px; }
+  /* ---------- sections (movies / series) ---------- */
+  .secwrap { top:84px; }
+  /* ---------- buttons ---------- */
+  .dbtn.loadmore { border:2px solid rgba(255,211,77,.65); color:#ffd34d; background:rgba(255,211,77,.08);
+                   font-weight:700; padding:20px 46px; font-size:25px; }
+  .dbtn.loadmore.focused { background:rgba(255,211,77,.25); }
+  /* sports */
+  #view-sports .strip { height:262px; }
+  #view-sports .stripInner { height:262px; }
+  .gcard { display:inline-block; vertical-align:top; width:565px; height:204px; margin-right:28px; border-radius:20px;
+           background:linear-gradient(165deg,#182136 0%,#11182a 100%); padding:18px 26px; position:relative; }
+  .gcard.focused { box-shadow:0 0 0 3px #0b0e14, 0 0 0 7px #ffd34d; }
+  .gcard.dim { opacity:.52; }
+  .gcard.rz { background:linear-gradient(150deg,#4a0f16 0%,#2a0d18 60%,#1a0f1e 100%); }
+  .gc-top { display:flex; justify-content:space-between; align-items:center; }
+  .gleague { font-size:21px; font-weight:800; letter-spacing:2.5px; color:#8fa1bd; }
+  .gnet { font-size:21px; font-weight:700; padding:7px 16px; border-radius:999px; background:#233354; color:#cfe0ff; }
+  .gnet.ant { background:rgba(255,211,77,.16); color:#ffd34d; }
+  .gnet.none { background:#2a2f3a; color:#8fa1bd; }
+  .gteams { margin-top:8px; }
+  .gtrow { display:flex; align-items:center; gap:16px; margin-top:5px; }
+  .glogo { width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+           font-size:15px; font-weight:800; color:#fff; flex:none; position:relative; overflow:hidden; }
+  .glogo img { position:absolute; left:0; top:0; width:38px; height:38px; object-fit:contain; }
+  .gname { font-size:25px; font-weight:600; color:#c6d2e6; flex:1; white-space:nowrap; overflow:hidden; }
+  .gtrow.win .gname { color:#fff; font-weight:800; }
+  .gscore { font-size:28px; font-weight:800; color:#c6d2e6; min-width:52px; text-align:right; }
+  .gtrow.win .gscore { color:#fff; }
+  .grec { font-size:21px; color:#7787a3; font-weight:600; }
+  .gc-bot { position:absolute; left:26px; right:26px; bottom:12px; display:flex; justify-content:space-between; align-items:center; }
+  .gstat { font-size:23px; font-weight:800; color:#ff6b6b; }
+  .gstat.soon { color:#aebdd4; }
+  .gact { font-size:22px; font-weight:700; color:#8fa1bd; }
+  .gcard.focused .gact { color:#ffd34d; }
+  .rz-title { font-size:33px; font-weight:800; letter-spacing:1px; margin-top:8px; }
+  .rz-title span { color:#ff5f57; }
+  .rz-sub { font-size:22px; color:#d8b7bc; margin-top:6px; font-weight:600; }
+  .sportsmsg { margin:30px 0 0 72px; font-size:27px; color:#aebdd4; }
+  .dbtn { display:inline-block; padding:18px 34px; margin-right:18px; border-radius:14px;
+          background:rgba(255,255,255,.10); font-size:27px; color:#f2f4f8; }
+  .dbtn.nfx { background:#b00610; } .dbtn.dnp { background:#1f3fbf; } .dbtn.amp { background:#e47911; }
+  .dbtn.focused { box-shadow:0 0 0 3px #0b0e14, 0 0 0 8px #ffd34d; }
+  /* ---------- overlays ---------- */
+  .plate { position:absolute; left:0; top:0; width:1920px; height:1080px; z-index:40; display:none;
+           background:rgba(6,8,13,.96); }
+  .plate.on { display:block; }
+  #dBg { position:absolute; left:-40px; top:-40px; width:2000px; height:1160px; object-fit:cover;
+         filter:blur(22px) brightness(.42); opacity:.85; }
+  #dPoster { position:absolute; left:110px; top:120px; width:380px; height:548px; border-radius:18px;
+             overflow:hidden; background:#1a2233; }
+  #dPoster img { width:380px; height:548px; object-fit:cover; }
+  #dPoster .noposter { padding:36px 24px; font-size:30px; color:#aebdd4; line-height:1.4; }
+  #dMain { position:absolute; left:560px; top:120px; width:1240px; }
+  #dTitle { font-size:56px; font-weight:700; line-height:1.12; }
+  #dMeta { margin-top:14px; font-size:27px; color:#aebdd4; }
+  #dMeta .star { color:#ffd34d; }
+  #dDesc { margin-top:22px; font-size:26px; line-height:1.5; color:#dde6f2; width:1150px;
+           max-height:210px; overflow:hidden; }
+  #dAvail { margin-top:24px; font-size:24px; color:#9fb0c9; width:1150px; line-height:1.45; }
+  #dBtns { position:absolute; left:560px; top:778px; }
+  #dSimilar { position:absolute; left:110px; top:856px; width:1700px; }
+  #dSimLabel { font-size:24px; color:#9fb0c9; margin-bottom:10px; }
+  #dSimLabel b { color:#fff; }
+  #dSimStrip { position:relative; height:204px; overflow:hidden; }
+  #dSimStrip .stripInner { height:204px; padding-left:2px; padding-top:4px; }
+  #pWrap { position:absolute; left:0; top:0; width:1920px; height:1080px; text-align:center; }
+  #pLabel { margin-top:110px; font-size:34px; color:#9fb0c9; letter-spacing:2px; }
+  #pPoster { margin:36px auto 0 auto; width:340px; height:490px; border-radius:18px; overflow:hidden;
+             background:#1a2233; }
+  #pPoster img { width:340px; height:490px; object-fit:cover; }
+  #pTitle { margin-top:30px; font-size:48px; font-weight:700; }
+  #pMeta { margin-top:10px; font-size:26px; color:#aebdd4; }
+  #pBtns { margin-top:44px; }
+  #status { position:absolute; left:56px; bottom:20px; font-size:22px; color:#a9bcd8; z-index:6;
+            background:rgba(6,8,13,.88); padding:7px 16px; border-radius:12px; }
+  /* v2.5 polish: shared focus motion + ranked-card badges */
+  .tab, .chip, .key, .rchip, .dbtn, .poster { transition:none; }
+  .badges.right { left:auto; right:8px; }
+  .empty { margin:30px 0 0 72px; font-size:27px; color:#9fb0c9; }
+  .empty.noindent { margin-left:2px; }
+  /* ---------- v2.1: seen, cast, recent searches ---------- */
+  .seenbdg { position:absolute; left:8px; top:8px; background:rgba(20,120,60,.88); color:#fff;
+             font-size:18px; font-weight:700; padding:3px 9px; border-radius:8px; }
+  #dCast { margin-top:20px; }
+  .castItem { display:inline-block; vertical-align:top; width:104px; margin-right:14px; }
+  .castItem img, .castItem .cph { width:92px; height:124px; border-radius:10px; object-fit:cover; background:#1a2233; }
+  .castItem .cph { text-align:center; line-height:124px; font-size:34px; color:#5f7292; }
+  .castItem .cn { font-size:17px; color:#e6edf7; margin-top:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100px; }
+  .castItem .cc { font-size:16px; color:#8fa2bd; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100px; }
+  .rchip { display:inline-block; padding:13px 24px; margin:0 12px 12px 0; border-radius:26px;
+           background:rgba(255,255,255,.08); font-size:23px; color:#dbe4f2; }
+  .rchip.focused { box-shadow:0 0 0 2px #0b0e14, 0 0 0 6px #ffd34d; }
+  /* ---------- trailer player ---------- */
+  #plate-trailer { z-index:60; }
+  #tFrameWrap { position:absolute; left:160px; top:64px; width:1600px; height:900px; background:#000;
+                border-radius:12px; overflow:hidden; }
+  #tFrameWrap iframe, #tFrameWrap > div { width:1600px; height:900px; }
+  #tBtns { position:absolute; left:0; top:984px; width:1920px; text-align:center; }
+  #tMsg { position:absolute; left:0; top:984px; width:1920px; text-align:center; font-size:25px; color:#9fb0c9; }
+</style>
+</head>
+<body>
+<div id="bg"></div>
+<div id="hdr">
+  <div id="greet">Stream Guide</div>
+  <div id="subline">Everything across your services, in one place</div>
+  <div id="clockbox"><div id="clock">--:--</div><div id="wx">Diamond Bar</div></div>
+</div>
+<div id="tabs"></div>
+
+<div class="view" id="view-home"><div class="vwrap" id="rowsWrap"></div></div>
+
+<div class="view" id="view-movies">
+  <div class="secbar" id="fmovies"></div>
+  <div class="vwrap secwrap" id="mwrap"></div>
+</div>
+
+<div class="view" id="view-series">
+  <div class="secbar" id="fseries"></div>
+  <div class="vwrap secwrap" id="swrap"></div>
+</div>
+
+<div class="view" id="view-sports"><div class="vwrap" id="sportsWrap"></div></div>
+
+<div class="view" id="view-search">
+  <div id="sLeft">
+    <div id="qbox">Search: <span class="q" id="qtext"></span><span class="hint">pick letters — results update as you type</span></div>
+    <div id="keys"></div>
+  </div>
+  <div id="sRightBar"><div id="sfilterbar"></div></div>
+  <div class="vwrap" id="sresultsWrap"><div id="sresults"></div></div>
+</div>
+
+<div class="view" id="view-maybe"><div class="vwrap" id="maybeWrap"></div></div>
+
+<div class="view" id="view-trakt"><div class="vwrap" id="traktWrap"></div></div>
+
+<div class="plate" id="plate-detail">
+  <img id="dBg" alt=""/>
+  <div id="dPoster"></div>
+  <div id="dMain">
+    <div id="dTitle"></div>
+    <div id="dMeta"></div>
+    <div id="dDesc"></div>
+    <div id="dAvail"></div>
+    <div id="dCast"></div>
+  </div>
+  <div id="dBtns"></div>
+  <div id="dSimilar">
+    <div id="dSimLabel">More Like This</div>
+    <div id="dSimStrip"><div class="stripInner" id="dSimInner"></div></div>
+  </div>
+</div>
+
+<div class="plate" id="plate-pick">
+  <div id="pWrap">
+    <div id="pLabel">TONIGHT'S PICK</div>
+    <div id="pPoster"></div>
+    <div id="pTitle"></div>
+    <div id="pMeta"></div>
+    <div id="pBtns"></div>
+  </div>
+</div>
+
+<div class="plate" id="plate-trailer">
+  <div id="tFrameWrap"></div>
+  <div id="tMsg">OK = play/pause · ◀ ▶ = seek · Back = close</div>
+  <div id="tBtns" style="display:none">
+    <span class="dbtn" data-act="tyt">Open in YouTube</span>
+    <span class="dbtn" data-act="tclose">Close</span>
+  </div>
+</div>
+
+<div id="ddmenu"></div>
+<div id="status">Loading the catalog…</div>
+<script>
+"use strict";
+/* Stream Guide v2 — unified catalog across Sameer's services.
+   Data: JustWatch GraphQL (keyless) + Open-Meteo weather. Playback hands off to the official apps. */
+function $(id) { return document.getElementById(id); }
+function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+
+var JW_URL = "https://apis.justwatch.com/graphql";
+var JW_Q = "query GetPopular($country: Country!, $language: Language!, $first: Int!, $filter: TitleFilter, $sortBy: PopularTitlesSorting!) { popularTitles(country: $country, language: $language, first: $first, filter: $filter, sortBy: $sortBy) { edges { node { id objectType content(country: $country, language: $language) { title originalReleaseYear shortDescription runtime posterUrl genres { shortName } scoring { imdbScore } } offers(country: $country, platform: WEB) { monetizationType package { technicalName clearName } } } } } }";
+var GENRE_NAMES = { act: "Action", adv: "Adventure", ani: "Animation", cdy: "Comedy", crm: "Crime", doc: "Documentary", drm: "Drama", fml: "Family", fnt: "Fantasy", hst: "History", hrr: "Horror", mus: "Music", mys: "Mystery", rma: "Romance", scf: "Sci-Fi", sp: "Sport", trl: "Thriller", war: "War", wst: "Western" };
+function genreNames(node, max) {
+  var gs = (node.content && node.content.genres) || [];
+  return gs.map(function (g) { return GENRE_NAMES[g.shortName]; }).filter(Boolean).slice(0, max || 3);
+}
+function jwFetch(filter, first, sortBy) {
+  return fetch(JW_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ query: JW_Q, variables: { country: "US", language: "en", first: first || 20, filter: filter, sortBy: sortBy || "TMDB_POPULARITY" } })
+  }).then(function (r) { return r.json(); }).then(function (d) {
+    if (!d || !d.data || !d.data.popularTitles) return [];
+    return d.data.popularTitles.edges.map(function (e) { return e.node; });
+  });
+}
+/* ----- his services ----- */
+var SERVICES = [
+  { key: "nfx", short: "N", name: "Netflix", appId: "org.tizen.netflix-app", test: function (tn) { return tn.indexOf("netflix") === 0; } },
+  { key: "dnp", short: "D", name: "Disney+", appId: "MCmYXNxgcu.DisneyPlus", test: function (tn) { return tn.indexOf("disneyplus") === 0; } },
+  { key: "amp", short: "P", name: "Prime Video", appId: "org.tizen.primevideo", test: function (tn) { return tn.indexOf("amazonprime") === 0; } }
+];
+function flatOffers(node) { return (node.offers || []).filter(function (o) { return o.monetizationType === "FLATRATE"; }); }
+function servicesOf(node) {
+  var have = {};
+  flatOffers(node).forEach(function (o) {
+    var tn = (o.package && o.package.technicalName) || "";
+    SERVICES.forEach(function (s) { if (s.test(tn)) have[s.key] = s; });
+  });
+  return SERVICES.filter(function (s) { return have[s.key]; });
+}
+function availText(node) {
+  var byType = {};
+  (node.offers || []).forEach(function (o) {
+    if (o.monetizationType === "FLATRATE") return;
+    var nm = o.package && o.package.clearName; if (!nm) return;
+    byType[o.monetizationType] = byType[o.monetizationType] || [];
+    if (byType[o.monetizationType].indexOf(nm) < 0) byType[o.monetizationType].push(nm);
+  });
+  var parts = [];
+  [["FREE", "Free on"], ["ADS", "Free with ads on"], ["RENT", "Rent on"], ["BUY", "Buy on"], ["CINEMA", "In theaters via"]].forEach(function (p) {
+    if (byType[p[0]]) parts.push(p[1] + " " + byType[p[0]].slice(0, 3).join(", "));
+  });
+  return parts.join(" · ");
+}
+function posterUrl(node, profile) {
+  var p = node.content && node.content.posterUrl;
+  if (!p) return "";
+  return "https://images.justwatch.com" + p.replace("{profile}", profile || "s332").replace("{format}", "jpg");
+}
+function badgesHtml(node) {
+  var svcs = servicesOf(node);
+  if (!svcs.length) return "";
+  return '<span class="badges">' + svcs.map(function (s) { return '<span class="bdg ' + s.key + '">' + s.short + "</span>"; }).join("") + "</span>";
+}
+function scoreHtml(node) {
+  var c = node.content || {};
+  return c.scoring && c.scoring.imdbScore ? '<span class="score">★ ' + Number(c.scoring.imdbScore).toFixed(1) + "</span>" : "";
+}
+function seenHtml(node) { return isSeenNode(node) ? '<span class="seenbdg">✓ Seen</span>' : ""; }
+function cardHtml(node) {
+  var c = node.content || {};
+  var img = posterUrl(node);
+  var poster = img ? '<img loading="lazy" decoding="async" src="' + esc(img) + '" alt=""/>' : '<div class="noposter">' + esc(c.title || "") + "</div>";
+  return '<div class="poster">' + poster + seenHtml(node) + scoreHtml(node) + badgesHtml(node) + "</div>" +
+         '<div class="ctitle">' + esc(c.title || "") + "</div>" +
+         '<div class="cyear">' + esc(c.originalReleaseYear || "") + (node.objectType === "SHOW" ? " · Series" : " · Movie") + "</div>";
+}
+function slimCardHtml(node) {
+  var c = node.content || {};
+  var img = posterUrl(node);
+  var poster = img ? '<img loading="lazy" decoding="async" src="' + esc(img) + '" alt=""/>' : '<div class="noposter">' + esc(c.title || "") + "</div>";
+  return '<div class="poster">' + poster + seenHtml(node) + scoreHtml(node) + badgesHtml(node) + "</div>";
+}
+function stripHtml(nodes, noindent) {
+  return '<div class="strip"><div class="stripInner' + (noindent ? " noindent" : "") + '">' + nodes.map(function (n) {
+    return '<div class="card" data-jwid="' + esc(n.id) + '">' + cardHtml(n) + "</div>";
+  }).join("") + "</div></div>";
+}
+function gridHtml(nodes, perRow, noindent) {
+  var out = "";
+  for (var i = 0; i < nodes.length; i += perRow) out += '<div class="rowblk">' + stripHtml(nodes.slice(i, i + perRow), noindent) + "</div>";
+  return out;
+}
+var nodeReg = {};
+function registerNodes(nodes) { nodes.forEach(function (n) { nodeReg[n.id] = n; }); }
+function lsGet(k, fb) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : fb; } catch (e) { return fb; } }
+function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+/* ----- local storage: Maybe list + Recently Viewed ----- */
+var maybe = [];
+try { maybe = JSON.parse(localStorage.getItem("sg_maybe_v1") || "[]"); } catch (e) { maybe = []; }
+function saveMaybe() { try { localStorage.setItem("sg_maybe_v1", JSON.stringify(maybe)); } catch (e) {} }
+function inMaybe(id) { return maybe.some(function (n) { return n.id === id; }); }
+function toggleMaybe(node) {
+  var target = !isMaybeNode(node);
+  if (target) { if (!inMaybe(node.id)) maybe.push(node); }
+  else { maybe = maybe.filter(function (n) { return n.id !== node.id; }); }
+  saveMaybe(); renderTabs();
+  traktPushWatchlist(node, target);
+}
+var recents = [];
+try { recents = JSON.parse(localStorage.getItem("sg_recent_v1") || "[]"); } catch (e) { recents = []; }
+function pushRecent(node) {
+  recents = [node].concat(recents.filter(function (n) { return n.id !== node.id; })).slice(0, 14);
+  try { localStorage.setItem("sg_recent_v1", JSON.stringify(recents)); } catch (e) {}
+}
+/* ----- Seen-it (personalization seed, stored locally) ----- */
+var seen = [];
+try { seen = JSON.parse(localStorage.getItem("sg_seen_v1") || "[]"); } catch (e) { seen = []; }
+function saveSeen() { try { localStorage.setItem("sg_seen_v1", JSON.stringify(seen.slice(0, 300))); } catch (e) {} }
+function inSeen(id) { return seen.some(function (n) { return n.id === id; }); }
+function toggleSeen(node) {
+  var target = !isSeenNode(node);
+  if (target) { if (!inSeen(node.id)) seen.push(node); }
+  else { seen = seen.filter(function (n) { return n.id !== node.id; }); }
+  saveSeen();
+  traktPushHistory(node, target);
+}
+/* ----- Recent searches ----- */
+var searches = [];
+try { searches = JSON.parse(localStorage.getItem("sg_searches_v1") || "[]"); } catch (e) { searches = []; }
+function saveSearch(q) {
+  q = (q || "").trim();
+  if (q.length < 2) return;
+  searches = [q].concat(searches.filter(function (s) { return s.toLowerCase() !== q.toLowerCase(); })).slice(0, 8);
+  try { localStorage.setItem("sg_searches_v1", JSON.stringify(searches)); } catch (e) {}
+}
+/* ================= return-restore =================
+   Leaving the app (trailer handoff, provider launch) saves the current
+   title; on the next cold start within 60 minutes the app reopens that
+   title's detail page instead of landing cold on Home. One-shot: the
+   saved state is consumed by the restore attempt. */
+var RETURN_KEY = "sg_return_v1";
+function saveReturn(node) {
+  if (!node || !node.title) return;
+  try {
+    localStorage.setItem(RETURN_KEY, JSON.stringify({
+      id: node.id, title: node.title, year: node.year || null,
+      type: node.objectType || "MOVIE", ts: Date.now()
+    }));
+  } catch (e) {}
+}
+function clearReturn() { try { localStorage.removeItem(RETURN_KEY); } catch (e) {} }
+function maybeRestore() {
+  var s = null;
+  try { s = JSON.parse(localStorage.getItem(RETURN_KEY) || "null"); } catch (e) {}
+  if (!s || !s.title) return;
+  clearReturn();
+  if (!s.ts || (Date.now() - s.ts) > 60 * 60 * 1000) return;
+  if (screen !== "home") return;
+  var n = s.id ? nodeReg[s.id] : null;
+  if (n) { openDetail(n); return; }
+  jwFetch({ objectTypes: [s.type || "MOVIE"], searchQuery: s.title }, 8, "TMDB_POPULARITY").then(function (nodes) {
+    var m = null;
+    for (var i = 0; i < nodes.length; i++) {
+      var c = nodes[i];
+      if (!s.year || !c.year || Math.abs((c.year || 0) - s.year) <= 1) { m = c; break; }
+    }
+    if (!m && nodes.length) m = nodes[0];
+    if (m && screen === "home") { registerNodes([m]); openDetail(m); }
+  }).catch(function () {});
+}
+
+/* ================= TMDB enrichment =================
+   Backdrops, cast, seasons/episodes, per-title recommendations, trailers.
+   Key is baked in at package time; empty key = enrichment silently off. */
+var TMDB_KEY = "__TMDB_API_KEY__";
+var TMDB_ON = TMDB_KEY.length > 10 && TMDB_KEY.indexOf("__") !== 0;
+var tmdbMatchCache = {};
+try { tmdbMatchCache = JSON.parse(localStorage.getItem("sg_tmdb_v1") || "{}"); } catch (e) { tmdbMatchCache = {}; }
+var tmdbDetailCache = {};
+function tmdbGet(path) {
+  var sep = path.indexOf("?") >= 0 ? "&" : "?";
+  return fetch("https://api.themoviedb.org/3" + path + sep + "api_key=" + TMDB_KEY + "&language=en-US")
+    .then(function (r) { return r.json(); });
+}
+function tmdbImg(p, size) { return p ? "https://image.tmdb.org/t/p/" + size + p : ""; }
+function tmdbMatch(node) {
+  if (!TMDB_ON) return Promise.resolve(null);
+  var hit = tmdbMatchCache[node.id];
+  if (hit) return Promise.resolve(hit.tid ? hit : null);
+  var c = node.content || {};
+  var type = node.objectType === "SHOW" ? "tv" : "movie";
+  var yq = node.objectType === "SHOW" ? "first_air_date_year" : "primary_release_year";
+  function attempt(withYear) {
+    var p = "/search/" + type + "?query=" + encodeURIComponent(c.title || "") + (withYear && c.originalReleaseYear ? "&" + yq + "=" + c.originalReleaseYear : "");
+    return tmdbGet(p).then(function (d) { return (d && d.results) || []; });
+  }
+  return attempt(true).then(function (res) {
+    if (!res.length) return attempt(false);
+    return res;
+  }).then(function (res) {
+    var pick = null;
+    for (var i = 0; i < res.length; i++) {
+      var r = res[i];
+      var yr = parseInt((r.release_date || r.first_air_date || "0").slice(0, 4), 10);
+      if (!c.originalReleaseYear || Math.abs(yr - c.originalReleaseYear) <= 1) { pick = r; break; }
+    }
+    if (!pick && res.length) pick = res[0];
+    var rec = pick ? { tid: pick.id, type: type } : { tid: 0 };
+    tmdbMatchCache[node.id] = rec;
+    try { localStorage.setItem("sg_tmdb_v1", JSON.stringify(tmdbMatchCache)); } catch (e) {}
+    return pick ? rec : null;
+  }).catch(function () { return null; });
+}
+function tmdbSlim(d) {
+  if (!d) return null;
+  return {
+    backdrop_path: d.backdrop_path || null,
+    number_of_seasons: d.number_of_seasons, number_of_episodes: d.number_of_episodes, status: d.status,
+    credits: { cast: ((d.credits || {}).cast || []).slice(0, 8).map(function (p) { return { name: p.name, character: p.character, profile_path: p.profile_path }; }) },
+    videos: { results: ((d.videos || {}).results || []).filter(function (v) { return v.site === "YouTube"; }).map(function (v) { return { key: v.key, type: v.type, site: v.site }; }) },
+    recommendations: { results: ((d.recommendations || {}).results || []).slice(0, 10).map(function (r) { return { id: r.id, title: r.title, name: r.name, release_date: r.release_date, first_air_date: r.first_air_date, poster_path: r.poster_path, vote_average: r.vote_average }; }) }
+  };
+}
+/* TMDB details persist across app restarts (slim payloads, cap 60 titles) —
+   backdrops/cast/trailers/recs for titles he has opened rarely change. */
+function tmdbDetail(node) {
+  return tmdbMatch(node).then(function (m) {
+    if (!m) return null;
+    if (tmdbDetailCache[m.tid]) return tmdbDetailCache[m.tid];
+    var store = lsGet("sg_tmdbd_v1", {});
+    if (store[m.tid]) { tmdbDetailCache[m.tid] = store[m.tid]; return store[m.tid]; }
+    return tmdbGet("/" + m.type + "/" + m.tid + "?append_to_response=credits,videos,recommendations")
+      .then(function (d) {
+        var slim = tmdbSlim(d);
+        tmdbDetailCache[m.tid] = slim;
+        if (slim) {
+          store[m.tid] = slim;
+          var keys = Object.keys(store);
+          while (keys.length > 60) { delete store[keys.shift()]; keys = Object.keys(store); }
+          lsSet("sg_tmdbd_v1", store);
+        }
+        return slim;
+      })
+      .catch(function () { return null; });
+  });
+}
+/* ----- tabs ----- */
+var VIEWS = ["home", "movies", "series", "sports", "search", "maybe", "trakt"];
+var viewNames = { home: "Home", movies: "Movies", series: "Series", sports: "Sports", search: "Search", maybe: "Maybe List", trakt: "Trakt" };
+function renderTabs() {
+  $("tabs").innerHTML = VIEWS.map(function (v) {
+    var label = viewNames[v] + (v === "maybe" && maybe.length ? " (" + maybe.length + ")" : "");
+    return '<span class="tab' + (screen === v ? " on" : "") + '" data-view="' + v + '">' + label + "</span>";
+  }).join("");
+}
+/* ----- filters ----- */
+var F = { sort: "TMDB_POPULARITY", type: "ALL", genre: "ALL", service: "ALL", year: 0, rating: 0 };
+var F_DEFAULTS = { sort: "TMDB_POPULARITY", type: "ALL", genre: "ALL", service: "ALL", year: 0, rating: 0 };
+var FILTER_DEFS = [
+  { key: "sort", label: "Sort", values: [{ v: "TMDB_POPULARITY", n: "Popular" }, { v: "RELEASE_YEAR", n: "Newest" }, { v: "IMDB_SCORE", n: "Top Rated" }] },
+  { key: "type", label: "Type", values: [{ v: "ALL", n: "All" }, { v: "MOVIE", n: "Movies" }, { v: "SHOW", n: "Series" }] },
+  { key: "genre", label: "Genre", values: [{ v: "ALL", n: "All" }, { v: "act", n: "Action" }, { v: "cdy", n: "Comedy" }, { v: "drm", n: "Drama" }, { v: "trl", n: "Thriller" }, { v: "scf", n: "Sci-Fi" }, { v: "hrr", n: "Horror" }, { v: "ani", n: "Animation" }, { v: "rma", n: "Romance" }, { v: "doc", n: "Documentary" }, { v: "crm", n: "Crime" }, { v: "fnt", n: "Fantasy" }, { v: "fml", n: "Family" }] },
+  { key: "service", label: "Service", values: [{ v: "ALL", n: "All" }, { v: "nfx", n: "Netflix" }, { v: "dnp", n: "Disney+" }, { v: "amp", n: "Prime" }] },
+  { key: "year", label: "Year", values: [{ v: 0, n: "Any" }, { v: 2026, n: "2026+" }, { v: 2025, n: "2025+" }, { v: 2024, n: "2024+" }, { v: 2020, n: "2020+" }, { v: 2010, n: "2010+" }] },
+  { key: "rating", label: "IMDb", values: [{ v: 0, n: "Any" }, { v: 6, n: "6+" }, { v: 7, n: "7+" }, { v: 8, n: "8+" }] }
+];
+function fName(key) {
+  var def = FILTER_DEFS.filter(function (d) { return d.key === key; })[0];
+  var cur = def.values.filter(function (x) { return x.v === F[key]; })[0];
+  return cur ? cur.n : "";
+}
+function isDefaultF() { return FILTER_DEFS.every(function (d) { return F[d.key] === F_DEFAULTS[d.key]; }); }
+function barHtml(includeType) {
+  return '<div class="fbar">' + FILTER_DEFS.filter(function (d) { return includeType || d.key !== "type"; }).map(function (d) {
+    return '<span class="chip" data-fkey="' + d.key + '">' + d.label + " <b>" + esc(fName(d.key)) + "</b> ▾</span>";
+  }).join("") + '<span class="chip reset" data-reset="1">✕ <b>Reset</b></span></div>';
+}
+function renderFilterBars() {
+  $("fmovies").innerHTML = barHtml(false);
+  $("fseries").innerHTML = barHtml(false);
+  $("sfilterbar").innerHTML = '<div class="fbar noindent">' + FILTER_DEFS.map(function (d) {
+    return '<span class="chip" data-fkey="' + d.key + '">' + d.label + " <b>" + esc(fName(d.key)) + "</b> ▾</span>";
+  }).join("") + '<span class="chip reset" data-reset="1">✕ <b>Reset</b></span></div>';
+}
+function mkFilter(types, withSearch) {
+  var f = {
+    objectTypes: types,
+    monetizationTypes: ["FLATRATE"],
+    packages: F.service === "ALL" ? ["nfx", "dnp", "amp"] : [F.service]
+  };
+  if (F.year) f.releaseYear = { min: F.year };
+  if (F.genre !== "ALL") f.genres = [F.genre];
+  if (withSearch && query) f.searchQuery = query;
+  return f;
+}
+function ratingFilter(nodes) {
+  if (!F.rating) return nodes;
+  return nodes.filter(function (n) {
+    var s = n.content && n.content.scoring && n.content.scoring.imdbScore;
+    return s != null && s >= F.rating;
+  });
+}
+/* With an IMDb floor set, a single sorted fetch starves the list (e.g. Newest+8+ only
+   finds the few brand-new 8+ titles). Fetch deep on both the chosen sort and IMDb
+   score, merge, apply the floor, then order by the chosen sort — older qualifying
+   titles are included, newest first when sorted by Newest. */
+function fetchFiltered(types, withSearch, want) {
+  if (!F.rating) return jwFetch(mkFilter(types, withSearch), want || 40, F.sort);
+  var big = Math.max(100, want || 60);
+  return Promise.all([
+    jwFetch(mkFilter(types, withSearch), big, F.sort),
+    jwFetch(mkFilter(types, withSearch), big, "IMDB_SCORE")
+  ]).then(function (rs) {
+    var seen = {}, merged = [];
+    rs[0].concat(rs[1]).forEach(function (n) { if (!seen[n.id]) { seen[n.id] = 1; merged.push(n); } });
+    var kept = ratingFilter(merged);
+    var score = function (n) { var c = n.content || {}; return (c.scoring && c.scoring.imdbScore) || 0; };
+    var year = function (n) { return (n.content || {}).originalReleaseYear || 0; };
+    if (F.sort === "RELEASE_YEAR") kept.sort(function (a, b) { return year(b) - year(a) || score(b) - score(a); });
+    else if (F.sort === "IMDB_SCORE") kept.sort(function (a, b) { return score(b) - score(a); });
+    return kept.slice(0, want || 60);
+  });
+}
+function describeF() {
+  var parts = [];
+  if (F.service !== "ALL") parts.push(fName("service"));
+  if (F.genre !== "ALL") parts.push(fName("genre"));
+  if (F.year) parts.push(fName("year"));
+  if (F.rating) parts.push("IMDb " + fName("rating"));
+  parts.push("by " + fName("sort"));
+  return parts.join(" · ");
+}
+function resetFilters() {
+  F = { sort: "TMDB_POPULARITY", type: "ALL", genre: "ALL", service: "ALL", year: 0, rating: 0 };
+  renderFilterBars();
+  applyFilterChange();
+  rebuildBands(true);
+}
+function applyFilterChange() {
+  if (screen === "movies" || screen === "series") loadSection(screen);
+  else if (screen === "search") runSearch();
+}
+/* ----- home: hero + curated rows ----- */
+var heroNode = null;
+function heroHtml(node) {
+  var c = node.content || {};
+  var svcs = servicesOf(node);
+  var img = posterUrl(node, "s592");
+  var meta = [];
+  if (c.originalReleaseYear) meta.push(c.originalReleaseYear);
+  meta.push(node.objectType === "SHOW" ? "Series" : "Movie");
+  var gs = genreNames(node, 3);
+  if (gs.length) meta.push(gs.join(" · "));
+  if (c.runtime) meta.push(c.runtime + " min");
+  var score = c.scoring && c.scoring.imdbScore ? ' &nbsp;<span class="star">★ ' + Number(c.scoring.imdbScore).toFixed(1) + "</span>" : "";
+  var watch = svcs.length ? '<span class="dbtn ' + svcs[0].key + '" data-act="hwatch" data-app="' + esc(svcs[0].appId) + '" data-name="' + esc(svcs[0].name) + '">▶ Watch on ' + esc(svcs[0].name) + "</span>" : "";
+  watch += '<span class="dbtn" data-act="ht">▶ Trailer</span>';
+  return (img ? '<img class="heroBg" src="' + esc(img) + '" alt=""/>' : "") +
+    '<div class="heroShade"></div>' +
+    (img ? '<div class="heroPoster"><img src="' + esc(img) + '" alt=""/></div>' : "") +
+    '<div class="heroContent">' +
+      '<div class="heroKick">FEATURED' + (svcs.length ? " · " + svcs.map(function (s) { return s.name.toUpperCase(); }).join(" · ") : "") + "</div>" +
+      '<div class="heroTitle">' + esc(c.title || "") + "</div>" +
+      '<div class="heroMeta">' + esc(meta.join(" · ")) + score + "</div>" +
+      '<div class="heroDesc">' + esc(c.shortDescription || "") + "</div>" +
+      '<div class="heroBtns">' + watch +
+        '<span class="dbtn" data-act="hdetails">Details</span>' +
+        '<span class="dbtn" data-act="hmaybe">' + (inMaybe(node.id) ? "✓ In Maybe" : "＋ Maybe") + "</span>" +
+      "</div>" +
+    "</div>";
+}
+function setHero(node) {
+  if (!node) return;
+  heroNode = node;
+  registerNodes([node]);
+  var blk = $("heroBlk");
+  if (blk) blk.innerHTML = heroHtml(node);
+  enrichHero(node);
+}
+function recentRowHtml() {
+  return '<div class="rowlabel">Recently Viewed</div>' + stripHtml(recents);
+}
+function renderHomePlaceholders() {
+  var skel = '<div class="strip"><div class="stripInner">' + '<span class="skel"></span>'.repeat(7) + "</div></div>";
+  var html = '<div class="heroblk" id="heroBlk"><div class="skelhero"></div></div>';
+  if (recents.length) html += '<div class="rowblk" id="recentBlk">' + recentRowHtml() + "</div>";
+  html += ROW_DEFS.map(function (r) {
+    return '<div class="rowblk"><div class="rowlabel">' + esc(r.label) + "</div>" + skel + "</div>";
+  }).join("");
+  $("rowsWrap").innerHTML = html;
+}
+var SVC_FILTER = { monetizationTypes: ["FLATRATE"], packages: ["nfx", "dnp", "amp"] };
+function svcFilter(extra) { var f = { objectTypes: ["MOVIE", "SHOW"] }; for (var k in SVC_FILTER) f[k] = SVC_FILTER[k]; if (extra) for (var k2 in extra) f[k2] = extra[k2]; return f; }
+var ROW_DEFS = [
+  { label: "Top 25 This Week", sub: "trending + popular · on your services", custom: "top25" },
+  { label: "New Movies", sub: "just out, on your services", sort: "RELEASE_YEAR", minYear: 2025, floorScore: 5.8, scoredFirst: true, filter: svcFilter({ objectTypes: ["MOVIE"] }), first: 32, cap: 16 },
+  { label: "New Series", sub: "just out, on your services", sort: "RELEASE_YEAR", minYear: 2025, floorScore: 5.8, scoredFirst: true, filter: svcFilter({ objectTypes: ["SHOW"] }), first: 32, cap: 16 },
+  { label: "Recent & Acclaimed", sub: "2024 and newer · IMDb 7.2+", sort: "TMDB_POPULARITY", minYear: 2024, requireScore: 7.2, filter: svcFilter({ releaseYear: { min: 2024 } }), first: 32, cap: 16 },
+  { label: "Popular on Your Services", sub: "the evergreen stuff", sort: "TMDB_POPULARITY", filter: svcFilter({}), first: 24, cap: 16 }
+];
+function postFilter(def, nodes) {
+  var kept = nodes.filter(function (n) {
+    var c = n.content || {};
+    var score = c.scoring && c.scoring.imdbScore;
+    if (def.minYear && (c.originalReleaseYear || 0) < def.minYear) return false;
+    if (def.floorScore && score != null && score < def.floorScore) return false;
+    if (def.requireScore && (score == null || score < def.requireScore)) return false;
+    return true;
+  });
+  if (def.scoredFirst) {
+    kept = kept.map(function (n, i) { return { n: n, i: i }; }).sort(function (a, b) {
+      var sa = a.n.content && a.n.content.scoring && a.n.content.scoring.imdbScore;
+      var sb = b.n.content && b.n.content.scoring && b.n.content.scoring.imdbScore;
+      if (sa == null && sb == null) return a.i - b.i;
+      if (sa == null) return 1;
+      if (sb == null) return -1;
+      return sb - sa || a.i - b.i;
+    }).map(function (x) { return x.n; });
+  }
+  return kept.slice(0, def.cap || 16);
+}
+function renderRowInto(blk, def, nodes) {
+  if (!blk) return;
+  blk.innerHTML = '<div class="rowlabel">' + esc(def.label) + (def.sub ? ' <span class="dim">' + esc(def.sub) + "</span>" : "") + "</div>" + (nodes.length ? stripHtml(nodes) : '<div class="empty">Nothing came back — check the connection.</div>');
+}
+function heroPick(nodes) { return nodes.filter(function (n) { return !isSeenNode(n); })[0] || nodes[0]; }
+/* ----- Top 25: TMDB Trending (global buzz) blended with Trakt Trending
+   (what people are watching now), resolved through JustWatch and kept only
+   when the title streams on his services. Cached 12h like the other rows. ----- */
+function topStripHtml(nodes) {
+  return '<div class="strip"><div class="stripInner">' + nodes.map(function (n, i) {
+    var html = cardHtml(n).replace('<div class="poster">', '<div class="poster"><div class="rankno">' + (i + 1) + "</div>").replace('class="badges"', 'class="badges right"');
+    return '<div class="card" data-jwid="' + esc(n.id) + '">' + html + "</div>";
+  }).join("") + "</div></div>";
+}
+function renderTop25Into(blk, nodes) {
+  if (!blk) return;
+  blk.innerHTML = '<div class="rowlabel">Top ' + (nodes.length || 25) + ' This Week <span class="dim">trending + popular · on your services</span></div>' + (nodes.length ? topStripHtml(nodes) : '<div class="empty">Nothing came back — check the connection.</div>');
+}
+function computeTopList(cfg) {
+  var minCache = Math.floor(cfg.n * 0.8);
+  var cache = lsGet(cfg.cacheKey, null);
+  if (cache && cache.nodes && cache.nodes.length >= minCache && (Date.now() - cache.ts) < HOME_TTL) return Promise.resolve(cache.nodes);
+  var nowD = new Date();
+  function unreleased(x) {
+    var d = x.release_date || x.first_air_date || "";
+    if (!d) return false;
+    var dt = new Date(d + "T12:00:00");
+    return !isNaN(dt) && dt > nowD;
+  }
+  var tmdbPaths = cfg.mode === "all" ? ["/trending/all/week", "/trending/all/week?page=2"]
+    : cfg.mode === "movie" ? ["/trending/movie/week", "/trending/movie/week?page=2"]
+    : ["/trending/tv/week", "/trending/tv/week?page=2"];
+  var jobs = [
+    TMDB_ON ? tmdbGet(tmdbPaths[0]).catch(function () { return null; }) : Promise.resolve(null),
+    TMDB_ON ? tmdbGet(tmdbPaths[1]).catch(function () { return null; }) : Promise.resolve(null)
+  ];
+  if (cfg.mode !== "tv") jobs.push(traktFetch("GET", "/movies/trending?limit=40").catch(function () { return null; }));
+  if (cfg.mode !== "movie") jobs.push(traktFetch("GET", "/shows/trending?limit=40").catch(function () { return null; }));
+  return Promise.all(jobs).then(function (rs) {
+    var score = {}, meta = {};
+    [[rs[0], 30], [rs[1], 14]].forEach(function (pg) {
+      ((pg[0] && pg[0].results) || []).forEach(function (x, i) {
+        var mt = x.media_type || (cfg.mode === "all" ? "" : cfg.mode);
+        if (mt !== "movie" && mt !== "tv") return;
+        if (unreleased(x)) return;
+        score[x.id] = (score[x.id] || 0) + Math.max(1, pg[1] - i);
+        meta[x.id] = { tid: x.id, type: mt, title: x.title || x.name || "", year: parseInt((x.release_date || x.first_air_date || "0").slice(0, 4), 10) || 0 };
+      });
+    });
+    var ti = 2;
+    [["movie", "movies"], ["tv", "shows"]].forEach(function (pr) {
+      if (cfg.mode !== "all" && cfg.mode !== pr[0]) return;
+      var arr = rs[ti++]; if (!arr) return;
+      arr.forEach(function (x, j) {
+        var o = x[pr[1] === "movies" ? "movie" : "show"] || {}; var ids = o.ids || {};
+        if (!ids.tmdb) return;
+        score[ids.tmdb] = (score[ids.tmdb] || 0) + Math.max(1, 41 - j) * 1.5;
+        if (!meta[ids.tmdb]) meta[ids.tmdb] = { tid: ids.tmdb, type: pr[0], title: o.title || "", year: o.year || 0 };
+      });
+    });
+    var cand = Object.keys(meta).map(function (k) { return meta[k]; })
+      .sort(function (a, b) { return (score[b.tid] || 0) - (score[a.tid] || 0); }).slice(0, 64);
+    if (!cand.length) return [];
+    var resolved = [], seenIds = {}, i = 0;
+    function normT(s) { return String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim(); }
+    return new Promise(function (done) {
+      function finish(nodes) {
+        if (nodes.length >= minCache) lsSet(cfg.cacheKey, { ts: Date.now(), nodes: nodes });
+        done(nodes);
+      }
+      function step() {
+        if (resolved.length >= cfg.n || i >= cand.length) {
+          resolved.sort(function (a, b) { return b.sc - a.sc; });
+          var nodes = resolved.slice(0, cfg.n).map(function (r) { return r.node; });
+          if (nodes.length >= cfg.n) { finish(nodes); return; }
+          var bf = cfg.mode === "all" ? svcFilter({}) : svcFilter({ objectTypes: [cfg.mode === "tv" ? "SHOW" : "MOVIE"] });
+          jwFetch(bf, 40, "TMDB_POPULARITY").then(function (pop) {
+            for (var k = 0; k < pop.length && nodes.length < cfg.n; k++) { if (!seenIds[pop[k].id]) { seenIds[pop[k].id] = 1; nodes.push(pop[k]); } }
+            finish(nodes);
+          }).catch(function () { finish(nodes); });
+          return;
+        }
+        var slice = cand.slice(i, i + 4); i += 4;
+        Promise.all(slice.map(function (c) {
+          return jwFetch({ objectTypes: [c.type === "tv" ? "SHOW" : "MOVIE"], searchQuery: c.title }, 6, "TMDB_POPULARITY").then(function (found) {
+            if (!found.length) return;
+            var pick = null, k;
+            for (k = 0; k < found.length; k++) { if (normT((found[k].content || {}).title) === normT(c.title)) { pick = found[k]; break; } }
+            if (!pick) for (k = 0; k < found.length; k++) { var yr = (found[k].content || {}).originalReleaseYear || 0; if (!c.year || Math.abs(yr - c.year) <= 1) { pick = found[k]; break; } }
+            if (!pick) pick = found[0];
+            if (pick && !seenIds[pick.id] && servicesOf(pick).length) { seenIds[pick.id] = 1; resolved.push({ node: pick, sc: score[c.tid] || 0 }); }
+          }).catch(function () {});
+        })).then(function () { setTimeout(step, 120); });
+      }
+      step();
+    });
+  }).catch(function () { return []; });
+}
+function computeTop25() { return computeTopList({ mode: "all", n: 25, cacheKey: "sg_top25_v2" }); }
+function computeSectionTop(key) { var mode = key === "movies" ? "movie" : "tv"; return computeTopList({ mode: mode, n: 30, cacheKey: "sg_top30_" + mode + "_v1" }); }
+/* Home rows: stale-while-revalidate. A cached copy (12h TTL) renders instantly on
+   open; fresh data streams in behind it and swaps in, preserving focus position. */
+var HOME_TTL = 12 * 3600 * 1000;
+function loadBrowse() {
+  renderHomePlaceholders();
+  var offset = 1 + (recents.length ? 1 : 0);
+  var cache = lsGet("sg_homerows_v2", null);
+  var usedCache = false;
+  if (cache && cache.rows && (Date.now() - cache.t) < HOME_TTL) {
+    ROW_DEFS.forEach(function (def, ri) {
+      if (def.custom === "top25") {
+        var tc = lsGet("sg_top25_v2", null);
+        if (tc && tc.nodes && tc.nodes.length && (Date.now() - tc.ts) < HOME_TTL) {
+          usedCache = true;
+          registerNodes(tc.nodes);
+          renderTop25Into($("rowsWrap").children[ri + offset], tc.nodes);
+        }
+        return;
+      }
+      var nodes = cache.rows[ri];
+      if (nodes && nodes.length) {
+        usedCache = true;
+        registerNodes(nodes);
+        renderRowInto($("rowsWrap").children[ri + offset], def, nodes);
+        if (ri === 3 && !heroNode) setHero(heroPick(nodes));
+        if (ri === 4 && !heroNode) setHero(heroPick(nodes));
+      }
+    });
+    if (usedCache) {
+      $("status").textContent = "Showing your cached guide — refreshing in the background…";
+      scheduleRebuild();
+    }
+  }
+  var freshCache = { t: Date.now(), rows: {} };
+  var done = 0;
+  ROW_DEFS.forEach(function (def, ri) {
+    if (def.custom === "top25") {
+      setTimeout(function () { computeTop25().then(function (nodes) {
+        if (nodes && nodes.length) {
+          registerNodes(nodes);
+          renderTop25Into($("rowsWrap").children[ri + offset], nodes);
+        }
+        done++;
+        if (done === ROW_DEFS.length) { $("status").textContent = "Availability by JustWatch · Metadata by TMDB · OK = details · Back = close"; scheduleRebuild(); }
+      }); }, 900);
+      return;
+    }
+    jwFetch(def.filter, def.first, def.sort).then(function (raw) {
+      var nodes = postFilter(def, raw);
+      registerNodes(nodes);
+      freshCache.rows[ri] = nodes;
+      lsSet("sg_homerows_v2", freshCache);
+      if (ri === 3 && nodes.length && (!heroNode || !anyKey)) setHero(heroPick(nodes));
+      if (ri === 4 && nodes.length && !heroNode) setHero(heroPick(nodes));
+      renderRowInto($("rowsWrap").children[ri + offset], def, nodes);
+      done++;
+      if (done === ROW_DEFS.length) { $("status").textContent = "Availability by JustWatch · Metadata by TMDB · OK = details · Back = close"; scheduleRebuild(); }
+    }).catch(function () {
+      done++;
+      if (done === ROW_DEFS.length && !usedCache) {
+        var blk = $("rowsWrap").children[offset + 1];
+        if (blk && !cache) blk.innerHTML = '<div class="rowlabel">Catalog <span class="dim">couldn\'t load — check the connection</span></div>';
+        rebuildBands(true);
+      }
+    });
+  });
+}
+function updateRecentRow() {
+  var blk = $("recentBlk");
+  if (blk && !recents.length) { blk.parentNode.removeChild(blk); return; }
+  if (blk) { blk.innerHTML = recentRowHtml(); return; }
+  if (recents.length) {
+    var div = document.createElement("div");
+    div.className = "rowblk"; div.id = "recentBlk";
+    div.innerHTML = recentRowHtml();
+    var hero = $("heroBlk");
+    hero.parentNode.insertBefore(div, hero.nextSibling);
+  }
+}
+/* ----- sections: Movies / Series ----- */
+var SEC = {
+  movies: { wrapId: "mwrap", type: "MOVIE", loaded: false },
+  series: { wrapId: "swrap", type: "SHOW", loaded: false }
+};
+var SEC_CACHE = {};
+var SEC_TTL = 45 * 60 * 1000;
+function filterSig() { return [F.sort, F.genre, F.service, F.year, F.rating].join("|"); }
+function renderSection(key, nodes) {
+  var sec = SEC[key];
+  sec.shown = nodes;
+  var wrap = $(sec.wrapId);
+  var topHtml = sec.top && sec.top.length ?
+    '<div class="rowblk"><div class="rowlabel">Top ' + sec.top.length + (key === "movies" ? " Movies" : " Series") + ' <span class="dim">trending + popular · on your services</span></div>' + topStripHtml(sec.top) + "</div>" : "";
+  var moreHtml = !sec.exhausted && nodes.length >= (sec.want || 40) ?
+    '<div class="rowblk"><div style="margin-left:72px"><span class="dbtn loadmore" data-act="loadmore">Load more ▾</span></div></div>' : "";
+  wrap.innerHTML = topHtml +
+    '<div class="rowblk"><div class="rowlabel">' + (key === "movies" ? "Movies" : "Series") + ' <span class="dim">' + nodes.length + " · " + esc(describeF()) + "</span></div></div>" +
+    (nodes.length ? gridHtml(nodes, 8) : '<div class="empty">Nothing matches those filters on your services.</div>') + moreHtml;
+}
+function ensureSectionTop(key) {
+  var sec = SEC[key];
+  if (sec.topState === "done" || sec.topState === "loading") return;
+  var mode = key === "movies" ? "movie" : "tv";
+  var cache = lsGet("sg_top30_" + mode + "_v1", null);
+  if (cache && cache.nodes && cache.nodes.length >= 20 && (Date.now() - cache.ts) < HOME_TTL) {
+    sec.top = cache.nodes; sec.topState = "done"; registerNodes(sec.top);
+    if (sec.shown) renderSection(key, sec.shown);
+    return;
+  }
+  sec.topState = "loading";
+  computeSectionTop(key).then(function (nodes) {
+    sec.topState = "done";
+    if (nodes && nodes.length) {
+      sec.top = nodes; registerNodes(nodes);
+      if (screen === key && sec.shown) { renderSection(key, sec.shown); scheduleRebuild(); }
+    }
+  }).catch(function () { sec.topState = "done"; });
+}
+function loadMore(key) {
+  var sec = SEC[key];
+  if (sec.loadingMore) return;
+  sec.loadingMore = true;
+  $("status").textContent = "Loading more…";
+  sec.want = (sec.want || 40) + 40;
+  fetchFiltered([sec.type], false, sec.want).then(function (nodes) {
+    sec.loadingMore = false;
+    var prev = (sec.shown || []).length;
+    registerNodes(nodes);
+    SEC_CACHE[key + ":" + filterSig()] = { t: Date.now(), nodes: nodes };
+    if (nodes.length <= prev) { sec.exhausted = true; $("status").textContent = "That's everything matching those filters."; }
+    else $("status").textContent = "Availability by JustWatch · Metadata by TMDB · OK = details · Back = close";
+    renderSection(key, nodes);
+    if (screen === key) rebuildBands(true);
+  }).catch(function () { sec.loadingMore = false; $("status").textContent = "Load more failed — connection?"; });
+}
+function loadSection(key) {
+  var sec = SEC[key];
+  sec.loaded = true;
+  var sig = filterSig();
+  if (sec.sig !== sig) { sec.sig = sig; sec.want = 40; sec.exhausted = false; }
+  var ck = key + ":" + sig;
+  var hit = SEC_CACHE[ck];
+  if (hit && (Date.now() - hit.t) < SEC_TTL) {
+    registerNodes(hit.nodes);
+    renderSection(key, hit.nodes);
+    ensureSectionTop(key);
+    if (screen === key) rebuildBands(true);
+    return;
+  }
+  var wrap = $(sec.wrapId);
+  wrap.innerHTML = '<div class="rowblk"><div class="rowlabel">Results <span class="dim">loading…</span></div></div>';
+  fetchFiltered([sec.type], false, sec.want).then(function (nodes) {
+    registerNodes(nodes);
+    SEC_CACHE[ck] = { t: Date.now(), nodes: nodes };
+    renderSection(key, nodes);
+    ensureSectionTop(key);
+    if (screen === key) rebuildBands(true);
+  }).catch(function () {
+    wrap.innerHTML = '<div class="rowblk"><div class="rowlabel">Results <span class="dim">couldn\'t load</span></div></div>';
+    if (screen === key) rebuildBands(true);
+  });
+}
+/* ----- search ----- */
+var query = "";
+var searchTimer = null;
+var KEY_ROWS = ["ABCDEFGHIJ", "KLMNOPQRST", "UVWXYZ0123", "456789"];
+function renderKeys() {
+  var html = KEY_ROWS.map(function (row) {
+    return "<div>" + row.split("").map(function (ch) { return '<span class="key" data-k="' + ch + '">' + ch + "</span>"; }).join("") + "</div>";
+  }).join("");
+  html += '<div><span class="key wide" data-k=" ">Space</span><span class="key wide" data-k="BK">⌫ Delete</span><span class="key wide" data-k="CLR">Clear</span></div>';
+  $("keys").innerHTML = html;
+}
+function renderRecentSearches() {
+  if (!searches.length) { $("sresults").innerHTML = ""; return; }
+  $("sresults").innerHTML =
+    '<div class="rowblk"><div class="rowlabel">Recent Searches</div><div>' +
+    searches.map(function (s) { return '<span class="rchip" data-q="' + esc(s) + '">' + esc(s) + "</span>"; }).join("") +
+    '<span class="rchip" data-clearhist="1">✕ Clear</span></div></div>';
+}
+var SEARCH_CACHE = {};
+function renderSearchResults(nodes) {
+  $("sresults").innerHTML = nodes.length
+    ? '<div class="rowblk"><div class="rowlabel">Results <span class="dim">' + nodes.length + " · " + esc(describeF()) + "</span></div></div>" + gridHtml(nodes, 5, true)
+    : '<div class="empty noindent">No matches for “' + esc(query) + "” with those filters.</div>";
+}
+function runSearch() {
+  $("qtext").textContent = query || "";
+  if (!query) { renderRecentSearches(); rebuildBands(true); return; }
+  saveSearch(query);
+  var types = F.type === "ALL" ? ["MOVIE", "SHOW"] : [F.type];
+  var ck = query.toLowerCase() + "::" + F.type + "::" + filterSig();
+  if (SEARCH_CACHE[ck]) {
+    registerNodes(SEARCH_CACHE[ck]);
+    renderSearchResults(SEARCH_CACHE[ck]);
+    rebuildBands(true);
+    return;
+  }
+  fetchFiltered(types, true).then(function (nodes) {
+    registerNodes(nodes);
+    SEARCH_CACHE[ck] = nodes;
+    renderSearchResults(nodes);
+    rebuildBands(true);
+  }).catch(function () { $("sresults").innerHTML = '<div class="empty noindent">Search failed — connection?</div>'; rebuildBands(true); });
+}
+function keyPress(k) {
+  if (k === "BK") query = query.slice(0, -1);
+  else if (k === "CLR") query = "";
+  else query += k === " " ? " " : k;
+  if (searchTimer) clearTimeout(searchTimer);
+  searchTimer = setTimeout(runSearch, 380);
+}
+/* ----- maybe view ----- */
+function renderMaybe() {
+  var w = $("maybeWrap");
+  if (!maybe.length) {
+    var wlOnly = traktWlRowHtml();
+    w.innerHTML = wlOnly || '<div class="empty">Nothing saved yet. Open any title and tap “＋ Maybe” — movie-night picks live here.</div>';
+    return;
+  }
+  w.innerHTML =
+    '<div class="rowblk"><div class="rowlabel">Movie Night</div><div style="margin-left:72px"><span class="dbtn" id="pickBtn">🎲 Pick for Tonight</span></div></div>' +
+    '<div class="rowblk"><div class="rowlabel">Your Maybe List <span class="dim">' + maybe.length + " saved</span></div>" + stripHtml(maybe) + "</div>" +
+    (seen.length ? '<div class="rowblk"><div class="rowlabel">Already Seen <span class="dim">' + seen.length + " · open one to undo</span></div>" + stripHtml(seen.slice().reverse()) + "</div>" : "") +
+    traktWlRowHtml();
+}
+</script>
+<script>
+"use strict";
+/* ================= focus engine ================= */
+var screen = "home";             // home | movies | series | search | maybe | detail | pick | dropdown
+var bands = [];
+var bandIdx = 0, colIdx = 0, bandMem = {};
+var anyKey = false;
+var detailReturn = null, currentNode = null, lastPick = null;
+
+function stripBand(blk, wrapEl, padL, viewW) {
+  var cards = Array.prototype.slice.call(blk.querySelectorAll(".card"));
+  if (!cards.length) return null;
+  return { els: cards, kind: "strip", stripInner: blk.querySelector(".stripInner"), rowBlk: blk, wrapEl: wrapEl, padL: padL, viewW: viewW, tx: 0, rowTop: blk.offsetTop, rowH: blk.offsetHeight };
+}
+function collectBands() {
+  var out = [];
+  if (screen === "dropdown") {
+    out.push({ els: Array.prototype.slice.call($("ddmenu").querySelectorAll(".dditem")), kind: "menu" });
+    return out;
+  }
+  if (screen === "trailer") {
+    if (trailerBtnMode) out.push({ els: Array.prototype.slice.call($("tBtns").querySelectorAll(".dbtn")), kind: "tbtns" });
+    return out;
+  }
+  var tabs = Array.prototype.slice.call(document.querySelectorAll("#tabs .tab"));
+  if (tabs.length && screen !== "detail" && screen !== "pick") out.push({ els: tabs, kind: "tabs" });
+  if (screen === "home") {
+    var hb = Array.prototype.slice.call(document.querySelectorAll("#heroBlk .dbtn"));
+    if (hb.length) out.push({ els: hb, kind: "hero", rowBlk: $("heroBlk"), wrapEl: $("rowsWrap"), rowTop: 0, rowH: 472 });
+    Array.prototype.forEach.call($("rowsWrap").querySelectorAll(".rowblk"), function (blk) {
+      var b = stripBand(blk, $("rowsWrap"), 72, 1920);
+      if (b) out.push(b);
+    });
+  } else if (screen === "movies" || screen === "series") {
+    var bar = screen === "movies" ? $("fmovies") : $("fseries");
+    var chips = Array.prototype.slice.call(bar.querySelectorAll(".chip"));
+    if (chips.length) out.push({ els: chips, kind: "filters" });
+    var wrap = $(SEC[screen].wrapId);
+    Array.prototype.forEach.call(wrap.querySelectorAll(".rowblk"), function (blk) {
+      var b = stripBand(blk, wrap, 72, 1920);
+      if (b) out.push(b);
+    });
+    var lm = wrap.querySelector('[data-act="loadmore"]');
+    if (lm) { var lmb = lm.parentNode && lm.parentNode.parentNode; if (lmb) out.push({ els: [lm], kind: "btn", rowBlk: lmb, wrapEl: wrap, rowTop: lmb.offsetTop, rowH: lmb.offsetHeight }); }
+  } else if (screen === "search") {
+    Array.prototype.forEach.call($("keys").children, function (row) {
+      var ks = Array.prototype.slice.call(row.querySelectorAll(".key"));
+      if (ks.length) out.push({ els: ks, kind: "keys" });
+    });
+    var schips = Array.prototype.slice.call(document.querySelectorAll("#sfilterbar .chip"));
+    if (schips.length) out.push({ els: schips, kind: "filters" });
+    var rchips = Array.prototype.slice.call($("sresults").querySelectorAll(".rchip"));
+    if (rchips.length) out.push({ els: rchips, kind: "rsearch" });
+    Array.prototype.forEach.call($("sresults").querySelectorAll(".rowblk"), function (blk) {
+      var b = stripBand(blk, $("sresultsWrap"), 2, 1160);
+      if (b) out.push(b);
+    });
+  } else if (screen === "maybe") {
+    Array.prototype.forEach.call($("maybeWrap").querySelectorAll(".rowblk"), function (blk) {
+      var cards = Array.prototype.slice.call(blk.querySelectorAll(".card"));
+      if (cards.length) out.push({ els: cards, kind: "strip", stripInner: blk.querySelector(".stripInner"), rowBlk: blk, wrapEl: $("maybeWrap"), padL: 72, viewW: 1920, tx: 0, rowTop: blk.offsetTop, rowH: blk.offsetHeight });
+      var btn = blk.querySelector("#pickBtn");
+      if (btn) out.push({ els: [btn], kind: "btn" });
+    });
+  } else if (screen === "trakt") {
+    Array.prototype.forEach.call($("traktWrap").querySelectorAll(".rowblk"), function (blk) {
+      var b = stripBand(blk, $("traktWrap"), 72, 1920);
+      if (b) out.push(b);
+      var btns = Array.prototype.slice.call(blk.querySelectorAll(".dbtn"));
+      if (btns.length) out.push({ els: btns, kind: "btns", rowBlk: blk, wrapEl: $("traktWrap"), rowTop: blk.offsetTop, rowH: blk.offsetHeight });
+    });
+  } else if (screen === "sports") {
+    Array.prototype.forEach.call($("sportsWrap").querySelectorAll(".rowblk"), function (blk) {
+      var cards = Array.prototype.slice.call(blk.querySelectorAll(".gcard"));
+      if (cards.length) out.push({ els: cards, kind: "strip", stripInner: blk.querySelector(".stripInner"), rowBlk: blk, wrapEl: $("sportsWrap"), padL: 72, viewW: 1920, tx: 0, rowTop: blk.offsetTop, rowH: blk.offsetHeight });
+    });
+  } else if (screen === "detail") {
+    out.push({ els: Array.prototype.slice.call($("dBtns").querySelectorAll(".dbtn")), kind: "btns" });
+    var sim = Array.prototype.slice.call($("dSimInner").querySelectorAll(".card"));
+    if (sim.length) out.push({ els: sim, kind: "similar", stripInner: $("dSimInner"), cardW: 150, cardWid: 132, padL: 2, viewW: 1700, tx: 0 });
+  } else if (screen === "pick") {
+    out.push({ els: Array.prototype.slice.call($("pBtns").querySelectorAll(".dbtn")), kind: "btns" });
+  }
+  return out;
+}
+function rebuildBands(keep) {
+  bands = collectBands();
+  if (!keep) { bandIdx = 0; colIdx = 0; }
+  if (bandIdx >= bands.length) bandIdx = Math.max(0, bands.length - 1);
+  var b = bands[bandIdx];
+  if (b && colIdx >= b.els.length) colIdx = b.els.length - 1;
+  applyFocus();
+}
+var _rbTimer = null;
+function scheduleRebuild() { if (_rbTimer) return; _rbTimer = setTimeout(function () { _rbTimer = null; rebuildBands(true); }, 60); }
+function curEl() { var b = bands[bandIdx]; return b ? b.els[colIdx] : null; }
+var _lastFocusEl = null;
+var _pfTimer = null;
+function applyFocus(skipVert) {
+  if (_lastFocusEl && _lastFocusEl !== curEl()) _lastFocusEl.classList.remove("focused");
+  var b = bands[bandIdx], el = curEl();
+  if (!el) { _lastFocusEl = null; return; }
+  el.classList.add("focused");
+  _lastFocusEl = el;
+  if (el.classList && el.classList.contains("card") && typeof TMDB_ON !== "undefined" && TMDB_ON && typeof tmdbDetail === "function") {
+    var jwid = el.getAttribute("data-jwid");
+    var rn = jwid ? nodeReg[jwid] : null;
+    if (rn && !rn.tmdbResolve) {
+      if (_pfTimer) clearTimeout(_pfTimer);
+      _pfTimer = setTimeout(function () { tmdbDetail(rn).catch(function () {}); }, 350);
+    }
+  }
+  if (b.stripInner) {
+    var cardW = b.cardW || 230, padL = b.padL != null ? b.padL : 72;
+    var cardWid = b.cardWid || 208, viewW = b.viewW || 1920;
+    var left = padL + colIdx * cardW, right = left + cardWid;
+    var totalW = padL + b.els.length * cardW;
+    var tx = b.tx || 0;
+    if (left + tx < padL) tx = padL - left;
+    if (right + tx > viewW - 40) tx = viewW - 40 - right;
+    var minTx = Math.min(0, viewW - totalW - 40);
+    if (tx < minTx) tx = minTx;
+    if (tx > 0) tx = 0;
+    b.tx = tx;
+    b.stripInner.style.transform = "translateX(" + tx + "px)";
+  }
+  if (!skipVert && b.rowBlk && b.wrapEl) {
+    var viewH = 756 - (b.wrapEl.offsetTop || 0);
+    var top = b.rowTop != null ? b.rowTop : b.rowBlk.offsetTop;
+    var h = b.rowH != null ? b.rowH : b.rowBlk.offsetHeight;
+    var m = /translateY\((-?\d+)px\)/.exec(b.wrapEl.style.transform || "");
+    var ty = m ? parseInt(m[1], 10) : 0;
+    if (top + ty < 0) ty = -top;
+    if (top + h + ty > viewH) ty = viewH - (top + h);
+    if (ty > 0) ty = 0;
+    b.wrapEl.style.transform = "translateY(" + ty + "px)";
+  }
+  if (b.kind === "similar") {
+    var sn = nodeReg[el.getAttribute("data-jwid")];
+    if (sn) $("dSimLabel").innerHTML = "More Like This &nbsp;<b>" + esc(sn.tmdbResolve ? sn.tmdbResolve.title : (sn.content || {}).title || "") + "</b>";
+  }
+}
+function move(dx, dy) {
+  if (!bands.length) return;
+  if (bands[bandIdx] && bands[bandIdx].kind === "menu") {
+    if (dy) colIdx = Math.max(0, Math.min(bands[bandIdx].els.length - 1, colIdx + dy));
+    applyFocus();
+    return;
+  }
+  if (dx) {
+    var b = bands[bandIdx];
+    colIdx = Math.max(0, Math.min(b.els.length - 1, colIdx + dx));
+    bandMem[bandIdx] = colIdx;
+    applyFocus(true);
+    return;
+  }
+  if (dy) {
+    bandMem[bandIdx] = colIdx;
+    bandIdx = Math.max(0, Math.min(bands.length - 1, bandIdx + dy));
+    var nb = bands[bandIdx];
+    colIdx = Math.max(0, Math.min(nb.els.length - 1, bandMem[bandIdx] || 0));
+  }
+  applyFocus();
+}
+/* ================= dropdown menus ================= */
+var ddState = null;
+function openDropdown(chipEl) {
+  var key = chipEl.getAttribute("data-fkey");
+  var def = FILTER_DEFS.filter(function (d) { return d.key === key; })[0];
+  if (!def) return;
+  ddState = { from: screen, key: key, chipCol: colIdx };
+  var menu = $("ddmenu");
+  menu.innerHTML = def.values.map(function (x, i) {
+    return '<div class="dditem" data-i="' + i + '">' + esc(x.n) + (F[key] === x.v ? ' <span class="ddcheck">✓</span>' : "") + "</div>";
+  }).join("");
+  var r = chipEl.getBoundingClientRect();
+  menu.style.left = Math.max(8, Math.min(r.left, 1920 - 348)) + "px";
+  menu.classList.add("on");
+  var mh = menu.offsetHeight;
+  var top = r.bottom + 8;
+  if (top + mh > 1072) top = Math.max(8, r.top - mh - 8);
+  menu.style.top = top + "px";
+  screen = "dropdown";
+  bands = collectBands();
+  bandIdx = 0;
+  colIdx = Math.max(0, def.values.map(function (x) { return x.v; }).indexOf(F[key]));
+  applyFocus();
+}
+function closeDropdown(changed) {
+  $("ddmenu").classList.remove("on");
+  var from = ddState ? ddState.from : "home";
+  var chipCol = ddState ? ddState.chipCol : 0;
+  screen = from;
+  ddState = null;
+  if (changed) { renderFilterBars(); applyFilterChange(); }
+  bands = collectBands();
+  for (var i = 0; i < bands.length; i++) if (bands[i].kind === "filters") { bandIdx = i; break; }
+  var b = bands[bandIdx];
+  colIdx = b ? Math.min(chipCol, b.els.length - 1) : 0;
+  applyFocus();
+}
+function selectDropdown(i) {
+  var def = FILTER_DEFS.filter(function (d) { return d.key === ddState.key; })[0];
+  F[ddState.key] = def.values[i].v;
+  closeDropdown(true);
+}
+/* ================= actions ================= */
+function launchApp(appId, name) {
+  try {
+    tizen.application.launch(appId, function () {}, function (e) {
+      $("status").textContent = "Couldn't open " + name + " — is it installed?";
+    });
+  } catch (e) { $("status").textContent = "Couldn't open " + name + "."; }
+}
+function switchView(v) {
+  screen = v;
+  VIEWS.forEach(function (x) { $("view-" + x).classList.toggle("on", x === v); });
+  renderTabs();
+  if (v === "maybe") renderMaybe();
+  if (v === "trakt") renderTrakt();
+  if ((v === "movies" || v === "series") && !SEC[v].loaded) loadSection(v);
+  if (sportsTimer) { clearInterval(sportsTimer); sportsTimer = null; }
+  if (v === "sports") { loadSports(false); sportsTimer = setInterval(function () { if (screen === "sports") loadSports(true); }, 60000); }
+  bands = collectBands();
+  bandIdx = 0; colIdx = VIEWS.indexOf(v);
+  bandMem = {};
+  applyFocus();
+}
+/* ================= TMDB enrichment (detail + hero) ================= */
+var curTrailer = null;
+/* ================= Trakt =================
+   PKCE public client (no secret): device-code connect, tokens in localStorage.
+   Client ID baked in at package time; empty = Trakt features silently off. */
+var TRAKT_ID = "__TRAKT_CLIENT_ID__";
+var TRAKT_ON = TRAKT_ID.length > 10 && TRAKT_ID.indexOf("__") !== 0;
+var traktTok = lsGet("sg_trakt_v1", null);
+var traktUser = lsGet("sg_trakt_user", "");
+var traktWatched = lsGet("sg_traktw_v1", { movie: [], show: [] });
+var traktWatchlist = lsGet("sg_traktwl_v1", []);
+var traktRecs = lsGet("sg_traktrec_v1", null);
+var traktShows = lsGet("sg_traktshows_v1", []);
+var traktCal = lsGet("sg_traktcal_v1", null);
+var traktLastSync = 0;
+var traktConn = null, traktAtt = 0;
+function traktHeaders() {
+  var h = { "Content-Type": "application/json", "trakt-api-version": "2", "trakt-api-key": TRAKT_ID };
+  if (traktTok && traktTok.access) h.Authorization = "Bearer " + traktTok.access;
+  return h;
+}
+function traktRaw(method, path, body) {
+  return fetch("https://api.trakt.tv" + path, { method: method, headers: traktHeaders(), body: body ? JSON.stringify(body) : undefined });
+}
+function traktFetch(method, path, body) {
+  return traktRaw(method, path, body).then(function (r) {
+    if (r.status === 401 && traktTok && traktTok.refresh) {
+      return traktRefresh().then(function (ok) {
+        if (!ok) throw new Error("auth");
+        return traktRaw(method, path, body);
+      });
+    }
+    return r;
+  }).then(function (r) { return r.status === 204 ? null : r.json().catch(function () { return null; }); });
+}
+function traktRefresh() {
+  return fetch("https://api.trakt.tv/oauth/token", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ refresh_token: traktTok.refresh, client_id: TRAKT_ID, grant_type: "refresh_token" }) })
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      if (d && d.access_token) { traktTok = { access: d.access_token, refresh: d.refresh_token || traktTok.refresh }; lsSet("sg_trakt_v1", traktTok); return true; }
+      return false;
+    }).catch(function () { return false; });
+}
+function traktWatchedHas(node) {
+  var hit = tmdbMatchCache[node.id];
+  if (!hit || !hit.tid) return false;
+  var arr = hit.type === "tv" ? traktWatched.show : traktWatched.movie;
+  return arr.indexOf(hit.tid) >= 0;
+}
+function isSeenNode(node) { return inSeen(node.id) || traktWatchedHas(node); }
+function traktWatchlistHas(node) {
+  var hit = tmdbMatchCache[node.id];
+  if (!hit || !hit.tid) return false;
+  return traktWatchlist.some(function (e) { return e.tid === hit.tid; });
+}
+function isMaybeNode(node) { return inMaybe(node.id) || traktWatchlistHas(node); }
+function traktPushHistory(node, add) {
+  if (!TRAKT_ON || !traktTok) return;
+  tmdbMatch(node).then(function (m) {
+    if (!m) return;
+    var body = {}; body[m.type === "tv" ? "shows" : "movies"] = [{ ids: { tmdb: m.tid } }];
+    traktFetch("POST", add ? "/sync/history" : "/sync/history/remove", body).catch(function () {});
+    var arr = m.type === "tv" ? traktWatched.show : traktWatched.movie;
+    var i = arr.indexOf(m.tid);
+    if (add && i < 0) arr.push(m.tid);
+    if (!add && i >= 0) arr.splice(i, 1);
+    lsSet("sg_traktw_v1", traktWatched);
+    if (!add && m.type === "tv") {
+      traktShows = traktShows.filter(function (e) { return e.tid !== m.tid; });
+      lsSet("sg_traktshows_v1", traktShows);
+      if (traktCal) {
+        traktCal.up = (traktCal.up || []).filter(function (e) { return e.tid !== m.tid; });
+        traktCal.newS = (traktCal.newS || []).filter(function (e) { return e.tid !== m.tid; });
+        lsSet("sg_traktcal_v1", traktCal);
+      }
+      if (typeof detailReturn !== "undefined" && detailReturn && detailReturn.screen === "trakt") renderTrakt();
+    }
+  }).catch(function () {});
+}
+function traktPushWatchlist(node, add) {
+  if (!TRAKT_ON || !traktTok) return;
+  tmdbMatch(node).then(function (m) {
+    if (!m) return;
+    var body = {}; body[m.type === "tv" ? "shows" : "movies"] = [{ ids: { tmdb: m.tid } }];
+    traktFetch("POST", add ? "/sync/watchlist" : "/sync/watchlist/remove", body).catch(function () {});
+    if (add) {
+      if (!traktWatchlist.some(function (e) { return e.tid === m.tid; })) {
+        var c = node.content || {};
+        traktWatchlist.push({ tid: m.tid, type: m.type, title: c.title || "", year: c.originalReleaseYear || 0, poster: null });
+      }
+    } else traktWatchlist = traktWatchlist.filter(function (e) { return e.tid !== m.tid; });
+    lsSet("sg_traktwl_v1", traktWatchlist);
+  }).catch(function () {});
+}
+function tmdbStripHtml(list) {
+  return '<div class="strip"><div class="stripInner">' + list.map(function (r) {
+    nodeReg["tmdb:" + r.tid] = { tmdbResolve: { tid: r.tid, title: r.title, year: r.year, type: r.type === "tv" ? "SHOW" : "MOVIE" } };
+    return '<div class="card" data-jwid="tmdb:' + r.tid + '"><div class="poster">' + (r.poster ? '<img loading="lazy" src="' + esc(tmdbImg(r.poster, "w342")) + '" alt=""/>' : "") + "</div></div>";
+  }).join("") + "</div></div>";
+}
+function traktWlRowHtml() {
+  if (!traktWatchlist.length) return "";
+  var fresh = traktWatchlist.filter(function (e) {
+    var arr = e.type === "tv" ? traktWatched.show : traktWatched.movie;
+    return arr.indexOf(e.tid) < 0;
+  });
+  if (!fresh.length) return "";
+  return '<div class="rowblk"><div class="rowlabel">From your Trakt Watchlist <span class="dim">' + fresh.length + " saved</span></div>" + tmdbStripHtml(fresh) + "</div>";
+}
+function renderTraktRecRow() {
+  var old = $("traktRecBlk");
+  if (old) old.parentNode.removeChild(old);
+  if (!traktRecs || !traktRecs.length) return;
+  var div = document.createElement("div");
+  div.className = "rowblk"; div.id = "traktRecBlk";
+  div.innerHTML = '<div class="rowlabel">Recommended For You <span class="dim">by Trakt · from your history</span></div>' + tmdbStripHtml(traktRecs);
+  $("rowsWrap").appendChild(div);
+  if (screen === "home") rebuildBands(true);
+}
+function fillRecPosters() {
+  if (!TMDB_ON || !traktRecs) return;
+  var missing = traktRecs.filter(function (r) { return !r.poster; })
+    .concat(traktWatchlist.filter(function (r) { return !r.poster; }));
+  if (!missing.length) return;
+  Promise.all(missing.map(function (r) {
+    return tmdbGet("/" + r.type + "/" + r.tid).then(function (d) { if (d && d.poster_path) r.poster = d.poster_path; }).catch(function () {});
+  })).then(function () {
+    lsSet("sg_traktrec_v1", traktRecs);
+    lsSet("sg_traktwl_v1", traktWatchlist);
+    renderTraktRecRow();
+    if (screen === "maybe") renderMaybe();
+  });
+}
+function traktLoadRecs() {
+  if (!traktTok) return Promise.resolve();
+  return Promise.all([
+    traktFetch("GET", "/recommendations/movies?limit=10").catch(function () { return null; }),
+    traktFetch("GET", "/recommendations/shows?limit=10").catch(function () { return null; })
+  ]).then(function (rs) {
+    var out = [];
+    (rs[0] || []).forEach(function (x) { var o = x.movie; if (o && o.ids && o.ids.tmdb) out.push({ tid: o.ids.tmdb, type: "movie", title: o.title, year: o.year || 0, poster: null }); });
+    (rs[1] || []).forEach(function (x) { var o = x.show; if (o && o.ids && o.ids.tmdb) out.push({ tid: o.ids.tmdb, type: "tv", title: o.title, year: o.year || 0, poster: null }); });
+    if (out.length) {
+      traktRecs = out.slice(0, 14);
+      lsSet("sg_traktrec_v1", traktRecs);
+      renderTraktRecRow();
+      fillRecPosters();
+    }
+  });
+}
+/* ----- My Shows: calendars (Coming Up episodes + New Season premieres) ----- */
+function traktDateStr(d) { return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2); }
+var DOW = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+var MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+function fmtAir(iso) {
+  var d = new Date(iso); if (isNaN(d)) return "";
+  var today = new Date(); today.setHours(0, 0, 0, 0);
+  var dd = new Date(d); dd.setHours(0, 0, 0, 0);
+  var diff = Math.round((dd - today) / 86400000);
+  var base = DOW[d.getDay()] + ", " + MON[d.getMonth()] + " " + d.getDate();
+  if (diff === 0) return "Today";
+  if (diff === 1) return "Tomorrow";
+  return base;
+}
+function calEntry(x) {
+  var ep = x.episode || {}; var sh = x.show || {}; var ids = sh.ids || {};
+  if (!ids.tmdb) return null;
+  return { tid: ids.tmdb, title: sh.title || "", year: sh.year || 0, poster: null, fa: x.first_aired || "", s: ep.season || 0, n: ep.number || 0, et: ep.title || "" };
+}
+function traktLoadCal() {
+  if (!traktTok) return Promise.resolve();
+  var now = new Date();
+  var upStart = traktDateStr(now);
+  var premStart = traktDateStr(new Date(now.getTime() - 75 * 86400000));
+  return Promise.all([
+    traktFetch("GET", "/calendars/my/shows/" + upStart + "/31").catch(function () { return null; }),
+    traktFetch("GET", "/calendars/my/premieres/" + premStart + "/75").catch(function () { return null; })
+  ]).then(function (rs) {
+    var up = (rs[0] || []).map(calEntry).filter(Boolean);
+    up.sort(function (a, b) { return a.fa < b.fa ? -1 : 1; });
+    var maxByTid = {};
+    traktShows.forEach(function (e) { maxByTid[e.tid] = e.maxSeason || 0; });
+    var seenK = {}, newS = [];
+    (rs[1] || []).forEach(function (x) {
+      var e = calEntry(x); if (!e) return;
+      var k = e.tid + ":" + e.s;
+      if (seenK[k]) return; seenK[k] = 1;
+      if (maxByTid[e.tid] !== undefined && e.s <= maxByTid[e.tid]) return;
+      newS.push({ tid: e.tid, type: "tv", title: e.title, year: e.year, poster: null, s: e.s, fa: e.fa });
+    });
+    newS.sort(function (a, b) { return a.fa < b.fa ? 1 : -1; });
+    if (up.length || newS.length || traktCal) {
+      traktCal = { ts: Date.now(), up: up.slice(0, 30), newS: newS.slice(0, 14) };
+      lsSet("sg_traktcal_v1", traktCal);
+    }
+    fillShowPosters();
+    if (screen === "trakt") { renderTrakt(); rebuildBands(true); }
+  });
+}
+function fillShowPosters() {
+  if (!TMDB_ON) return;
+  var byTid = {}, queue = [];
+  function add(e) { if (e && e.tid && !e.poster && !byTid[e.tid]) { byTid[e.tid] = e; queue.push(e); } }
+  traktShows.forEach(add);
+  if (traktCal) { traktCal.newS.forEach(add); traktCal.up.forEach(add); }
+  if (!queue.length) return;
+  var i = 0;
+  function step() {
+    var slice = queue.slice(i, i + 10); i += 10;
+    if (!slice.length) {
+      lsSet("sg_traktshows_v1", traktShows);
+      if (traktCal) lsSet("sg_traktcal_v1", traktCal);
+      if (screen === "trakt") { renderTrakt(); rebuildBands(true); }
+      return;
+    }
+    Promise.all(slice.map(function (r) {
+      return tmdbGet("/tv/" + r.tid).then(function (d) {
+        if (d && d.poster_path) {
+          traktShows.forEach(function (e) { if (e.tid === r.tid) e.poster = d.poster_path; });
+          if (traktCal) {
+            traktCal.newS.forEach(function (e) { if (e.tid === r.tid) e.poster = d.poster_path; });
+            traktCal.up.forEach(function (e) { if (e.tid === r.tid) e.poster = d.poster_path; });
+          }
+        }
+      }).catch(function () {});
+    })).then(function () {
+      lsSet("sg_traktshows_v1", traktShows);
+      if (traktCal) lsSet("sg_traktcal_v1", traktCal);
+      if (screen === "trakt" && i % 30 === 0) { renderTrakt(); rebuildBands(true); }
+      step();
+    });
+  }
+  step();
+}
+function epStripHtml(list) {
+  return '<div class="strip"><div class="stripInner">' + list.map(function (e) {
+    nodeReg["tmdb:" + e.tid] = { tmdbResolve: { tid: e.tid, title: e.title, year: e.year, type: "SHOW" } };
+    var prem = e.n === 1 && e.s > 1;
+    var lab = "S" + e.s + " E" + e.n + " · " + fmtAir(e.fa);
+    return '<div class="card" data-jwid="tmdb:' + e.tid + '"><div class="poster">' +
+      (e.poster ? '<img loading="lazy" src="' + esc(tmdbImg(e.poster, "w342")) + '" alt=""/>' : '<div class="noposter">' + esc(e.title) + "</div>") +
+      '<div class="eplabel">' + (prem ? '<span class="prem" style="display:block">Season Premiere</span>' : "") + esc(lab) + (e.et ? '<span class="et">' + esc(e.et) + "</span>" : "") + "</div>" +
+      "</div>" + '<div class="ctitle">' + esc(e.title) + "</div></div>";
+  }).join("") + "</div></div>";
+}
+function traktSync(manual) {
+  if (!TRAKT_ON || !traktTok) return Promise.resolve(false);
+  if (!manual && (Date.now() - (lsGet("sg_traktsync_t", 0) || 0)) < 6 * 3600 * 1000) return Promise.resolve(false);
+  var jobs = [
+    traktFetch("GET", "/users/me").then(function (u) { if (u && u.username) { traktUser = u.username; lsSet("sg_trakt_user", traktUser); } }).catch(function () {}),
+    traktFetch("GET", "/sync/watched/movies").then(function (a) { if (a) traktWatched.movie = a.map(function (x) { return x.movie && x.movie.ids && x.movie.ids.tmdb; }).filter(Boolean); }).catch(function () {}),
+    traktFetch("GET", "/sync/watched/shows").then(function (a) {
+      if (!a) return;
+      traktWatched.show = a.map(function (x) { return x.show && x.show.ids && x.show.ids.tmdb; }).filter(Boolean);
+      var oldP = {};
+      traktShows.forEach(function (e) { if (e.poster) oldP[e.tid] = e.poster; });
+      traktShows = a.map(function (x) {
+        var s = x.show || {}; var ids = s.ids || {};
+        var mx = 0;
+        (x.seasons || []).forEach(function (sn) { if (sn.number && sn.number > mx && (sn.episodes || []).length) mx = sn.number; });
+        return { tid: ids.tmdb, trakt: ids.trakt || 0, title: s.title || "", year: s.year || 0, poster: null, last: x.last_watched_at || "", maxSeason: mx };
+      }).filter(function (e) { return e.tid; });
+      traktShows.forEach(function (e) { if (oldP[e.tid]) e.poster = oldP[e.tid]; });
+      lsSet("sg_traktshows_v1", traktShows);
+    }).catch(function () {}),
+    traktFetch("GET", "/sync/watchlist/movies").then(function (a) { if (a) traktWatchlist = traktWatchlist.filter(function (e) { return e.type === "tv"; }).concat(a.map(function (x) { var o = x.movie || {}; return { tid: o.ids && o.ids.tmdb, type: "movie", title: o.title || "", year: o.year || 0, poster: null }; }).filter(function (e) { return e.tid; })); }).catch(function () {}),
+    traktFetch("GET", "/sync/watchlist/shows").then(function (a) { if (a) traktWatchlist = traktWatchlist.filter(function (e) { return e.type === "movie"; }).concat(a.map(function (x) { var o = x.show || {}; return { tid: o.ids && o.ids.tmdb, type: "tv", title: o.title || "", year: o.year || 0, poster: null }; }).filter(function (e) { return e.tid; })); }).catch(function () {})
+  ];
+  return Promise.all(jobs).then(function () {
+    lsSet("sg_traktw_v1", traktWatched);
+    lsSet("sg_traktwl_v1", traktWatchlist);
+    traktLastSync = Date.now();
+    lsSet("sg_traktsync_t", traktLastSync);
+    return Promise.all([traktLoadRecs(), traktLoadCal()]).then(function () { fillRecPosters(); fillShowPosters(); return true; });
+  }).catch(function () { return false; });
+}
+function traktStartConnect() {
+  if (traktConn || !TRAKT_ON) return;
+  var att = ++traktAtt;
+  fetch("https://api.trakt.tv/oauth/device/code", { method: "POST", headers: { "Content-Type": "application/json", "trakt-api-version": "2", "trakt-api-key": TRAKT_ID }, body: JSON.stringify({ client_id: TRAKT_ID }) })
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      if (!d || !d.device_code) { $("status").textContent = "Trakt didn't return a code — try again."; return; }
+      traktConn = { device: d.device_code, user: d.user_code, until: Date.now() + (d.expires_in || 600) * 1000, att: att };
+      if (screen === "trakt") { renderTrakt(); rebuildBands(true); }
+      traktPoll(att);
+    })
+    .catch(function () { $("status").textContent = "Couldn't reach Trakt — connection?"; });
+}
+function traktPoll(att) {
+  if (!traktConn || traktConn.att !== att) return;
+  if (Date.now() > traktConn.until) { traktConn = null; if (screen === "trakt") { renderTrakt(); rebuildBands(true); } return; }
+  fetch("https://api.trakt.tv/oauth/device/token", { method: "POST", headers: { "Content-Type": "application/json", "trakt-api-version": "2", "trakt-api-key": TRAKT_ID }, body: JSON.stringify({ code: traktConn.device, client_id: TRAKT_ID }) })
+    .then(function (r) { return r.status === 200 ? r.json() : null; })
+    .then(function (d) {
+      if (!traktConn || traktConn.att !== att) return;
+      if (d && d.access_token) {
+        traktTok = { access: d.access_token, refresh: d.refresh_token || "" };
+        lsSet("sg_trakt_v1", traktTok);
+        traktConn = null;
+        $("status").textContent = "Trakt connected — syncing…";
+        traktSync(true).then(function () { if (screen === "trakt") { renderTrakt(); rebuildBands(true); } if (screen === "maybe") renderMaybe(); });
+      } else setTimeout(function () { traktPoll(att); }, 6000);
+    })
+    .catch(function () { if (traktConn && traktConn.att === att) setTimeout(function () { traktPoll(att); }, 8000); });
+}
+function traktDisconnect() {
+  traktTok = null; traktUser = "";
+  ["sg_trakt_v1", "sg_trakt_user", "sg_traktw_v1", "sg_traktwl_v1", "sg_traktrec_v1", "sg_traktshows_v1", "sg_traktcal_v1"].forEach(function (k) { try { localStorage.removeItem(k); } catch (e) {} });
+  traktWatched = { movie: [], show: [] }; traktWatchlist = []; traktRecs = null; traktShows = []; traktCal = null;
+  renderTraktRecRow();
+  if (screen === "trakt") { renderTrakt(); rebuildBands(true); }
+  if (screen === "maybe") renderMaybe();
+}
+function renderTrakt() {
+  var w = $("traktWrap"); if (!w) return;
+  if (!TRAKT_ON) { w.innerHTML = '<div class="empty">Trakt is not configured in this build.</div>'; return; }
+  if (traktConn) {
+    w.innerHTML =
+      '<div class="rowblk"><div class="rowlabel">Connect Trakt</div><div class="ttext">On your phone or computer, go to <b>auth.trakt.tv/activate</b> and enter this code:</div><div class="bigcode">' + esc(traktConn.user) + '</div><div class="ttext">Waiting for your approval… the code expires in about 10 minutes.</div></div>' +
+      '<div class="rowblk"><div style="margin-left:72px"><span class="dbtn" data-act="tccancel">Cancel</span></div></div>';
+    return;
+  }
+  if (!traktTok) {
+    w.innerHTML =
+      '<div class="rowblk"><div class="rowlabel">Trakt</div><div class="ttext">Connect your Trakt account and Stream Guide keeps your watched history and Maybe List in sync everywhere — and Home gets a Recommended For You row built from what you actually watch. Your Netflix history import is already in Trakt waiting.</div></div>' +
+      '<div class="rowblk"><div style="margin-left:72px"><span class="dbtn" data-act="tconnect">Connect Trakt</span></div></div>';
+    return;
+  }
+  var h =
+    '<div class="rowblk"><div class="rowlabel">Trakt <span class="dim">connected</span></div><div class="ttext">Signed in as <b>' + esc(traktUser || "…") + '</b><br/>In your Trakt history: ' + traktWatched.movie.length + " movies · " + traktWatched.show.length + ' shows · ' + ((traktWatchlist && traktWatchlist.length) || 0) + ' on your watchlist.<br/>Seen and Maybe changes you make here sync to Trakt automatically.</div></div>' +
+    '<div class="rowblk"><div style="margin-left:72px"><span class="dbtn" data-act="tsync">Sync now</span> <span class="dbtn" data-act="tdisc">Disconnect</span></div></div>';
+  if (traktCal && traktCal.up && traktCal.up.length)
+    h += '<div class="rowblk"><div class="rowlabel">Coming Up <span class="dim">new episodes of your shows · next 31 days</span></div>' + epStripHtml(traktCal.up) + "</div>";
+  if (traktCal && traktCal.newS && traktCal.newS.length)
+    h += '<div class="rowblk"><div class="rowlabel">New Season Out <span class="dim">premiered in the last 75 days · beyond where you left off</span></div>' + tmdbStripHtml(traktCal.newS) + "</div>";
+  if (traktShows.length) {
+    var sorted = traktShows.slice().sort(function (a, b) { return (b.last || "") < (a.last || "") ? -1 : 1; });
+    h += '<div class="rowblk"><div class="rowlabel">Your Shows <span class="dim">' + sorted.length + ' in your Trakt history · most recently watched first</span></div>' + tmdbStripHtml(sorted.map(function (e) { return { tid: e.tid, type: "tv", title: e.title, year: e.year, poster: e.poster }; })) + "</div>";
+  } else if (!traktCal)
+    h += '<div class="rowblk"><div class="ttext">Syncing your library… hit Sync now if this stays empty.</div></div>';
+  w.innerHTML = h;
+}
+function renderDetailBtns() {
+  var node = currentNode;
+  if (!node) return;
+  var svcs = servicesOf(node);
+  var btns = svcs.map(function (s) {
+    return '<span class="dbtn ' + s.key + '" data-act="launch" data-app="' + esc(s.appId) + '" data-name="' + esc(s.name) + '">▶ Watch on ' + esc(s.name) + "</span>";
+  });
+  if (curTrailer) btns.push('<span class="dbtn" data-act="trailer">▶ Trailer</span>');
+  btns.push('<span class="dbtn" data-act="maybe">' + (isMaybeNode(node) ? "✓ In Maybe — Remove" : "＋ Add to Maybe") + "</span>");
+  btns.push('<span class="dbtn" data-act="seen">' + (isSeenNode(node) ? "✓ Seen — Undo" : "✓ Seen it") + "</span>");
+  btns.push('<span class="dbtn" data-act="back">← Back</span>');
+  $("dBtns").innerHTML = btns.join("");
+  if (screen === "detail") {
+    bands = collectBands();
+    if (bandIdx >= bands.length) bandIdx = 0;
+    var b = bands[bandIdx];
+    if (b && colIdx >= b.els.length) colIdx = b.els.length - 1;
+    applyFocus();
+  }
+}
+function enrichDetail(node) {
+  if (!TMDB_ON) return;
+  tmdbDetail(node).then(function (d) {
+    if (!d || currentNode !== node) return;
+    renderDetailBtns();
+    if (d.backdrop_path) $("dBg").src = tmdbImg(d.backdrop_path, "w1280");
+    var extra = "";
+    if (node.objectType === "SHOW") {
+      if (d.number_of_seasons) extra += " · " + d.number_of_seasons + (d.number_of_seasons === 1 ? " Season" : " Seasons");
+      if (d.number_of_episodes) extra += " · " + d.number_of_episodes + " Episodes";
+      if (d.status) extra += " · " + d.status;
+    }
+    if (extra) $("dMeta").innerHTML += esc(extra);
+    if (d.credits && d.credits.cast && d.credits.cast.length) {
+      $("dCast").innerHTML = d.credits.cast.slice(0, 7).map(function (p) {
+        var img = p.profile_path ? '<img loading="lazy" src="' + esc(tmdbImg(p.profile_path, "w185")) + '" alt=""/>' : '<div class="cph">' + esc((p.name || "?").charAt(0)) + "</div>";
+        return '<span class="castItem">' + img + '<div class="cn">' + esc(p.name || "") + '</div><div class="cc">' + esc(p.character || "") + "</div></span>";
+      }).join("");
+    }
+    var tks = findTrailerKeys(d);
+    if (tks.length) { curTrailer = { key: tks[0], keys: tks }; renderDetailBtns(); }
+  });
+}
+function enrichHero(node) {
+  if (!TMDB_ON || !node) return;
+  tmdbDetail(node).then(function (d) {
+    if (!d || !d.backdrop_path || heroNode !== node) return;
+    var url = tmdbImg(d.backdrop_path, "w1280");
+    var pre = new Image();
+    pre.onload = function () {
+      var bg = document.querySelector("#heroBlk .heroBg");
+      if (bg && heroNode === node) bg.src = url;
+    };
+    pre.src = url;
+  });
+}
+function launchTrailerKey(key) {
+  if (currentNode) saveReturn(currentNode);
+  var url = "https://www.youtube.com/watch?v=" + key;
+  /* Target the STOCK YouTube app explicitly (ID verified from this TV's app
+     list — the launcher tile uses it). Never fall back to TizenTube: it is
+     broken on this TV ("network error") until its Host-IP fix is done. */
+  var YT_APP = "9Ur5IzDKqV.TizenYouTube";
+  function generic() {
+    try {
+      var ctrl = new tizen.ApplicationControl("http://tizen.org/appcontrol/operation/view_content", url, "video/*");
+      tizen.application.launchAppControl(ctrl, null, function () {}, function () { launchApp(YT_APP, "YouTube"); }, null);
+    } catch (e) { launchApp(YT_APP, "YouTube"); }
+  }
+  try {
+    var ctrl2 = new tizen.ApplicationControl("http://tizen.org/appcontrol/operation/view_content", url, "video/*");
+    tizen.application.launchAppControl(ctrl2, YT_APP, function () {}, function () { generic(); }, null);
+  } catch (e) { generic(); }
+}
+/* ================= in-app trailer player =================
+   The YouTube player is created ONLY while the trailer plate is open and is
+   destroyed on close — Home/scrolling never carry it. Fallback: open in the
+   YouTube app (launchTrailerKey) from the player's Down-menu. */
+var ytPlayer = null, ytApiReady = false, ytPendingKey = null, trailerKey = null;
+var trailerReturn = null, trailerBtnMode = false;
+function ensureYtApi() {
+  if (ytApiReady) { if (ytPendingKey) { var k = ytPendingKey; ytPendingKey = null; createYtPlayer(k); } return; }
+  if (document.getElementById("ytapi")) return;
+  var s = document.createElement("script");
+  s.id = "ytapi";
+  s.src = "https://www.youtube.com/iframe_api";
+  document.head.appendChild(s);
+  window.onYouTubeIframeAPIReady = function () {
+    ytApiReady = true;
+    if (ytPendingKey) { var k2 = ytPendingKey; ytPendingKey = null; createYtPlayer(k2); }
+  };
+}
+var trailerKeys = [], trailerIdx = 0, trailerGen = 0, trailerAdvTimer = null;
+function destroyYtPlayer() {
+  try { if (ytPlayer && ytPlayer.destroy) ytPlayer.destroy(); } catch (e) {}
+  ytPlayer = null;
+}
+function scheduleAdvance(code) {
+  if (trailerAdvTimer) return;
+  var delay = (code === 100 || code === 101 || code === 150) ? 400 : 1300;
+  trailerAdvTimer = setTimeout(function () { trailerAdvTimer = null; trailerAdvance(); }, delay);
+}
+function createYtPlayer(key) {
+  destroyYtPlayer();
+  $("tFrameWrap").innerHTML = '<div id="tPlayer"></div>';
+  var myGen = ++trailerGen;
+  try {
+    ytPlayer = new YT.Player("tPlayer", {
+      width: "1600", height: "900", videoId: key,
+      playerVars: { autoplay: 1, rel: 0, modestbranding: 1, playsinline: 1 },
+      events: {
+        onError: function (e) {
+          if (myGen !== trailerGen) return;
+          scheduleAdvance(e && e.data);
+        }
+      }
+    });
+  } catch (e) {
+    if (typeof YT !== "undefined") scheduleAdvance(0);
+    else showTrailerFallback("The trailer player couldn't load.");
+  }
+}
+function showTrailerFallback(msg) {
+  if (trailerAdvTimer) { clearTimeout(trailerAdvTimer); trailerAdvTimer = null; }
+  destroyYtPlayer();
+  $("tFrameWrap").innerHTML = '<div style="color:#dbe4f2;font-size:32px;text-align:center;padding-top:400px">' + esc(msg) + "</div>";
+  trailerBtnMode = true;
+  $("tBtns").style.display = "flex";
+  $("tMsg").style.display = "none";
+  bands = collectBands(); bandIdx = 0; colIdx = 0;
+  applyFocus();
+}
+/* Many official trailers block embedding (YouTube errors 101/150). Rotate
+   through every candidate — trailer, teaser, clip; the non-official cuts
+   usually CAN embed. When the list runs out, land on the YouTube handoff. */
+function trailerAdvance() {
+  trailerIdx++;
+  if (trailerIdx < trailerKeys.length) { createYtPlayer(trailerKeys[trailerIdx]); return; }
+  showTrailerFallback("This one can't play inside the app — its owner only allows YouTube playback.");
+}
+function openTrailer(keys) {
+  if (!keys || !keys.length) return;
+  if (typeof keys === "string") keys = [keys];
+  trailerKeys = keys; trailerIdx = 0;
+  trailerKey = keys[0];
+  trailerReturn = { screen: screen, bandIdx: bandIdx, colIdx: colIdx };
+  try { saveReturn(currentNode); } catch (e) {}
+  trailerBtnMode = false;
+  $("tBtns").style.display = "none";
+  $("tMsg").style.display = "block";
+  $("plate-trailer").classList.add("on");
+  screen = "trailer";
+  bands = [];
+  ytPendingKey = keys[0];
+  ensureYtApi();
+  if (ytApiReady && ytPendingKey) { var k = ytPendingKey; ytPendingKey = null; createYtPlayer(k); }
+  setTimeout(function () {
+    if (screen === "trailer" && !ytApiReady && !trailerBtnMode) showTrailerFallback("The trailer player couldn't load — check the connection.");
+  }, 9000);
+}
+function closeTrailer() {
+  if (trailerAdvTimer) { clearTimeout(trailerAdvTimer); trailerAdvTimer = null; }
+  trailerGen++;
+  destroyYtPlayer();
+  ytPendingKey = null;
+  $("tFrameWrap").innerHTML = "";
+  $("plate-trailer").classList.remove("on");
+  var tr = trailerReturn || { screen: "home", bandIdx: 0, colIdx: 0 };
+  screen = tr.screen;
+  bands = collectBands();
+  bandIdx = Math.min(tr.bandIdx, Math.max(0, bands.length - 1));
+  var b = bands[bandIdx];
+  colIdx = b ? Math.min(tr.colIdx, b.els.length - 1) : 0;
+  applyFocus();
+}
+function trailerTogglePlay() {
+  if (!ytPlayer || !ytPlayer.getPlayerState) return;
+  try {
+    if (ytPlayer.getPlayerState() === 1) ytPlayer.pauseVideo();
+    else ytPlayer.playVideo();
+  } catch (e) {}
+}
+function trailerSeek(delta) {
+  if (!ytPlayer || !ytPlayer.getCurrentTime) return;
+  try { ytPlayer.seekTo(Math.max(0, ytPlayer.getCurrentTime() + delta), true); } catch (e) {}
+}
+function launchTrailer() { if (curTrailer) openTrailer(curTrailer.keys || [curTrailer.key]); }
+function findTrailerKeys(d) {
+  var vids = ((d && d.videos && d.videos.results) || []).filter(function (v) { return v.site === "YouTube" && v.key; });
+  function rank(type) {
+    return vids.filter(function (v) { return v.type === type; })
+      .sort(function (a, b) { return (b.official === true) - (a.official === true); });
+  }
+  var out = [];
+  rank("Trailer").concat(rank("Teaser"), rank("Clip")).forEach(function (v) {
+    if (out.indexOf(v.key) < 0) out.push(v.key);
+  });
+  return out.slice(0, 4);
+}
+function findTrailerKey(d) { var ks = findTrailerKeys(d); return ks.length ? ks[0] : null; }
+function launchTrailerFor(node) {
+  if (!node) return;
+  if (!TMDB_ON) { $("status").textContent = "Trailers arrive with the TMDB upgrade."; return; }
+  $("status").textContent = "Finding the trailer…";
+  tmdbDetail(node).then(function (d) {
+    var keys = findTrailerKeys(d);
+    if (keys.length) openTrailer(keys);
+    else $("status").textContent = "No trailer or teaser on TMDB for this one.";
+  }).catch(function () { $("status").textContent = "Trailer lookup failed."; });
+}
+function openDetail(node) {
+  if (!node) return;
+  currentNode = node;
+  pushRecent(node);
+  if (screen !== "detail") detailReturn = { bandIdx: bandIdx, colIdx: colIdx, screen: screen };
+  var c = node.content || {};
+  var img = posterUrl(node, "s592");
+  $("dBg").src = posterUrl(node, "s332") || "";
+  $("dPoster").innerHTML = img ? '<img src="' + esc(img) + '" alt=""/>' : '<div class="noposter">' + esc(c.title || "") + "</div>";
+  $("dTitle").textContent = c.title || "";
+  var meta = [];
+  if (c.originalReleaseYear) meta.push(c.originalReleaseYear);
+  meta.push(node.objectType === "SHOW" ? "Series" : "Movie");
+  var gnames = genreNames(node, 3);
+  if (gnames.length) meta.push(gnames.join(" · "));
+  if (c.runtime) meta.push(c.runtime + " min");
+  var score = c.scoring && c.scoring.imdbScore ? ' &nbsp;<span class="star">★ ' + Number(c.scoring.imdbScore).toFixed(1) + "</span> IMDb" : "";
+  $("dMeta").innerHTML = esc(meta.join(" · ")) + score;
+  $("dDesc").textContent = c.shortDescription || "";
+  var svcs = servicesOf(node);
+  var avail = availText(node);
+  $("dAvail").innerHTML =
+    (svcs.length ? "Included with your " + svcs.map(function (s) { return s.name; }).join(" · ") + "." : "Not included in Netflix, Disney+, or Prime Video subscriptions.") +
+    (avail ? "<br/>" + esc(avail) + "." : "");
+  curTrailer = null;
+  renderDetailBtns();
+  $("dCast").innerHTML = "";
+  $("dSimInner").innerHTML = "";
+  $("dSimLabel").innerHTML = "More Like This";
+  $("plate-detail").classList.add("on");
+  screen = "detail";
+  bands = collectBands(); bandIdx = 0; colIdx = 0;
+  applyFocus();
+  enrichDetail(node);
+  loadSimilar(node);
+}
+function renderTmdbRecs(node, results) {
+  var recs = results.filter(function (r) { return r.poster_path; }).slice(0, 10);
+  if (!recs.length) { jwSimilar(node); return; }
+  recs.forEach(function (r) {
+    nodeReg["tmdb:" + r.id] = { tmdbResolve: { tid: r.id, title: r.title || r.name || "", year: parseInt((r.release_date || r.first_air_date || "0").slice(0, 4), 10), type: node.objectType } };
+  });
+  $("dSimInner").innerHTML = recs.map(function (r) {
+    var vote = r.vote_average ? '<span class="score">★ ' + Number(r.vote_average).toFixed(1) + "</span>" : "";
+    return '<div class="card sm" data-jwid="tmdb:' + r.id + '"><div class="poster"><img loading="lazy" src="' + esc(tmdbImg(r.poster_path, "w342")) + '" alt=""/>' + vote + "</div></div>";
+  }).join("");
+  bands = collectBands();
+  if (bandIdx >= bands.length) bandIdx = bands.length - 1;
+  applyFocus();
+}
+function loadSimilar(node) {
+  if (TMDB_ON) {
+    tmdbDetail(node).then(function (d) {
+      if (currentNode !== node) return;
+      if (d && d.recommendations && d.recommendations.results && d.recommendations.results.length) renderTmdbRecs(node, d.recommendations.results);
+      else jwSimilar(node);
+    });
+    return;
+  }
+  jwSimilar(node);
+}
+function jwSimilar(node) {
+  var gs = (node.content && node.content.genres) || [];
+  if (!gs.length) { $("dSimLabel").innerHTML = ""; return; }
+  var g = gs[0].shortName;
+  jwFetch({ objectTypes: [node.objectType], genres: [g], monetizationTypes: ["FLATRATE"], packages: ["nfx", "dnp", "amp"] }, 12, "TMDB_POPULARITY")
+    .then(function (nodes) {
+      if (currentNode !== node) return;
+      nodes = nodes.filter(function (n) { return n.id !== node.id; }).slice(0, 10);
+      if (!nodes.length) { $("dSimLabel").innerHTML = ""; return; }
+      registerNodes(nodes);
+      $("dSimInner").innerHTML = nodes.map(function (n) {
+        return '<div class="card sm" data-jwid="' + esc(n.id) + '">' + slimCardHtml(n) + "</div>";
+      }).join("");
+      bands = collectBands();
+      if (bandIdx >= bands.length) bandIdx = bands.length - 1;
+      applyFocus();
+    }).catch(function () { $("dSimLabel").innerHTML = ""; });
+}
+function closeDetail() {
+  $("plate-detail").classList.remove("on");
+  screen = detailReturn ? detailReturn.screen : "home";
+  if (screen === "maybe") renderMaybe();
+  if (screen === "home") updateRecentRow();
+  bands = collectBands();
+  bandIdx = detailReturn ? Math.min(detailReturn.bandIdx, bands.length - 1) : 0;
+  colIdx = detailReturn ? detailReturn.colIdx : 0;
+  var b = bands[bandIdx];
+  if (b && colIdx >= b.els.length) colIdx = b.els.length - 1;
+  applyFocus();
+}
+function openPick() {
+  if (!maybe.length) return;
+  var unseen = maybe.filter(function (n) { return !isSeenNode(n); });
+  var base = unseen.length ? unseen : maybe;
+  var pool = base.length > 1 && lastPick ? base.filter(function (n) { return n.id !== lastPick.id; }) : base;
+  var node = pool[Math.floor(Math.random() * pool.length)];
+  lastPick = node;
+  var c = node.content || {};
+  var img = posterUrl(node, "s592");
+  $("pPoster").innerHTML = img ? '<img src="' + esc(img) + '" alt=""/>' : "";
+  $("pTitle").textContent = c.title || "";
+  var svcs = servicesOf(node);
+  $("pMeta").textContent = [c.originalReleaseYear || "", node.objectType === "SHOW" ? "Series" : "Movie",
+    svcs.length ? "on " + svcs.map(function (s) { return s.name; }).join(" · ") : ""].filter(Boolean).join(" · ");
+  $("pBtns").innerHTML =
+    '<span class="dbtn" data-act="pdetails">Details</span>' +
+    '<span class="dbtn" data-act="pagain">🎲 Pick Again</span>' +
+    '<span class="dbtn" data-act="pclose">Close</span>';
+  $("plate-pick").classList.add("on");
+  screen = "pick";
+  bands = collectBands(); bandIdx = 0; colIdx = 0;
+  applyFocus();
+}
+function closePick() {
+  $("plate-pick").classList.remove("on");
+  screen = "maybe";
+  renderMaybe();
+  bands = collectBands(); bandIdx = Math.min(1, bands.length - 1); colIdx = 0;
+  applyFocus();
+}
+function activate(el) {
+  if (!el) return;
+  if (el.classList.contains("tab")) { switchView(el.getAttribute("data-view")); return; }
+  if (el.classList.contains("chip")) {
+    if (el.getAttribute("data-reset")) resetFilters();
+    else openDropdown(el);
+    return;
+  }
+  if (el.classList.contains("dditem")) { selectDropdown(parseInt(el.getAttribute("data-i"), 10)); return; }
+  if (el.classList.contains("card")) {
+    var reg = nodeReg[el.getAttribute("data-jwid")];
+    if (reg && reg.tmdbResolve) {
+      var rz = reg.tmdbResolve;
+      $("status").textContent = "Finding “" + rz.title + "”…";
+      jwFetch({ objectTypes: [rz.type], searchQuery: rz.title }, 6, "TMDB_POPULARITY").then(function (nodes) {
+        var pick = null;
+        for (var i = 0; i < nodes.length; i++) {
+          var yr = (nodes[i].content || {}).originalReleaseYear || 0;
+          if (!rz.year || Math.abs(yr - rz.year) <= 1) { pick = nodes[i]; break; }
+        }
+        if (!pick && nodes.length) pick = nodes[0];
+        if (pick) { registerNodes([pick]); openDetail(pick); }
+        else $("status").textContent = "“" + rz.title + "” isn't in the catalog.";
+      }).catch(function () { $("status").textContent = "Lookup failed — connection?"; });
+      return;
+    }
+    openDetail(reg);
+    return;
+  }
+  if (el.classList.contains("rchip")) {
+    if (el.getAttribute("data-clearhist")) {
+      searches = [];
+      try { localStorage.removeItem("sg_searches_v1"); } catch (e) {}
+      renderRecentSearches();
+      rebuildBands(true);
+    } else {
+      query = el.getAttribute("data-q") || "";
+      runSearch();
+    }
+    return;
+  }
+  if (el.classList.contains("key")) { keyPress(el.getAttribute("data-k")); return; }
+  if (el.id === "pickBtn") { openPick(); return; }
+  var act = el.getAttribute("data-act");
+  if (act === "game") { gameWatch(el); }
+  else if (act === "redzone") { launchApp("UdGpKNSRmw.NFL", "NFL"); }
+  else if (act === "launch" || act === "hwatch") { try { saveReturn(currentNode || heroNode); } catch (e) {} launchApp(el.getAttribute("data-app"), el.getAttribute("data-name")); }
+  else if (act === "hdetails") openDetail(heroNode);
+  else if (act === "ht") launchTrailerFor(heroNode);
+  else if (act === "hmaybe") { if (heroNode) { toggleMaybe(heroNode); setHero(heroNode); rebuildBands(true); } }
+  else if (act === "maybe") { toggleMaybe(currentNode); openDetail(currentNode); }
+  else if (act === "seen") { toggleSeen(currentNode); openDetail(currentNode); }
+  else if (act === "trailer") launchTrailer();
+  else if (act === "tyt") { var tk = trailerKey; closeTrailer(); if (tk) launchTrailerKey(tk); }
+  else if (act === "tclose") closeTrailer();
+  else if (act === "back") closeDetail();
+  else if (act === "tconnect") traktStartConnect();
+  else if (act === "tccancel") { traktConn = null; if (screen === "trakt") { renderTrakt(); rebuildBands(true); } }
+  else if (act === "loadmore") { loadMore(screen); }
+  else if (act === "tsync") { $("status").textContent = "Syncing with Trakt…"; traktSync(true).then(function () { if (screen === "trakt") { renderTrakt(); rebuildBands(true); } $("status").textContent = "Trakt sync complete."; }); }
+  else if (act === "tdisc") traktDisconnect();
+  else if (act === "pdetails") { $("plate-pick").classList.remove("on"); openDetail(lastPick); }
+  else if (act === "pagain") openPick();
+  else if (act === "pclose") closePick();
+}
+document.addEventListener("keydown", function (ev) {
+  anyKey = true;
+  var k = ev.keyCode;
+  if (screen === "trailer") {
+    ev.preventDefault();
+    if (k === 10009 || k === 461 || k === 27 || k === 413) { closeTrailer(); return; }
+    if (trailerBtnMode) {
+      if (k === 37) move(-1, 0);
+      else if (k === 39) move(1, 0);
+      else if (k === 13) activate(curEl());
+      else if (k === 38) {
+        trailerBtnMode = false;
+        $("tBtns").style.display = "none";
+        $("tMsg").style.display = "block";
+        bands = [];
+        applyFocus();
+      }
+      return;
+    }
+    if (k === 13 || k === 415 || k === 10252) trailerTogglePlay();
+    else if (k === 19) { try { ytPlayer && ytPlayer.pauseVideo(); } catch (e) {} }
+    else if (k === 37 || k === 412) trailerSeek(-10);
+    else if (k === 39 || k === 417) trailerSeek(10);
+    else if (k === 40) {
+      trailerBtnMode = true;
+      $("tBtns").style.display = "block";
+      $("tMsg").style.display = "none";
+      bands = collectBands();
+      bandIdx = 0; colIdx = 0;
+      applyFocus();
+    }
+    return;
+  }
+  if (k === 37) { move(-1, 0); ev.preventDefault(); }
+  else if (k === 39) { move(1, 0); ev.preventDefault(); }
+  else if (k === 38) { move(0, -1); ev.preventDefault(); }
+  else if (k === 40) { move(0, 1); ev.preventDefault(); }
+  else if (k === 13) { activate(curEl()); ev.preventDefault(); }
+  else if (k === 10009 || k === 461 || k === 27) {
+    if (screen === "dropdown") closeDropdown(false);
+    else if (screen === "detail") closeDetail();
+    else if (screen === "pick") closePick();
+    else { try { tizen.application.getCurrentApplication().exit(); } catch (e) {} }
+    ev.preventDefault();
+  }
+});
+/* ================= sports (ESPN) ================= */
+var SPORTS_LEAGUES = [
+  { key: "nfl", name: "NFL", path: "football/nfl" },
+  { key: "nba", name: "NBA", path: "basketball/nba" },
+  { key: "wnba", name: "WNBA", path: "basketball/wnba" },
+  { key: "ncaab", name: "NCAAB", path: "basketball/mens-college-basketball" },
+  { key: "ncaaf", name: "NCAAF", path: "football/college-football" },
+  { key: "mlb", name: "MLB", path: "baseball/mlb" }
+];
+var sportsTimer = null;
+var sportsBusy = false;
+function sportsYmd(d) { function p(n) { return (n < 10 ? "0" : "") + n; } return "" + d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()); }
+function fmtGameTime(iso) {
+  var d = new Date(iso); if (isNaN(d.getTime())) return "";
+  var h = d.getHours(), m = d.getMinutes(), ap = h >= 12 ? "PM" : "AM"; h = h % 12; if (!h) h = 12;
+  return h + ":" + (m < 10 ? "0" : "") + m + " " + ap + " PT";
+}
+function teamOf(c) {
+  if (!c || !c.team) return { name: "TBD", abbr: "", logo: "", color: "33415e", score: "", record: "" };
+  return { name: c.team.displayName || c.team.name || "TBD", abbr: c.team.abbreviation || "",
+           logo: c.team.logo || "", color: c.team.color || "33415e",
+           score: (c.score == null ? "" : "" + c.score),
+           record: (c.records && c.records[0] && c.records[0].summary) || "" };
+}
+function parseGame(ev, league) {
+  var comp = (ev.competitions || [])[0] || {};
+  var cs = comp.competitors || [];
+  var home = null, away = null;
+  cs.forEach(function (c) { if (c.homeAway === "home") home = c; else if (c.homeAway === "away") away = c; });
+  if (!home) home = cs[0]; if (!away) away = cs[1];
+  var st = ev.status || comp.status || {};
+  var nets = [];
+  (comp.broadcasts || []).forEach(function (b) { (b.names || []).forEach(function (n) { if (n && nets.indexOf(n) < 0) nets.push(n); }); });
+  if (!nets.length && comp.broadcast) nets.push(comp.broadcast);
+  return { league: league, state: (st.type && st.type.state) || "pre",
+           detail: (st.type && st.type.shortDetail) || "", date: ev.date || "",
+           home: teamOf(home), away: teamOf(away), nets: nets };
+}
+var ANT_NETS = [ { n: "CBS", ch: 2 }, { n: "NBC", ch: 4 }, { n: "ABC", ch: 7 }, { n: "FOX", ch: 11 } ];
+var SPORT_APPS = [
+  { re: /^espn/i, appId: "XtU8fQk2gN.ESPN", name: "ESPN" },
+  { re: /prime video/i, appId: "org.tizen.primevideo", name: "Prime Video" },
+  { re: /^nfl/i, appId: "UdGpKNSRmw.NFL", name: "NFL" },
+  { re: /disney/i, appId: "MCmYXNxgcu.DisneyPlus", name: "Disney+" }
+];
+function gameAction(g) {
+  var i, j, net;
+  for (i = 0; i < g.nets.length; i++) { net = g.nets[i];
+    for (j = 0; j < ANT_NETS.length; j++) if (net.toUpperCase() === ANT_NETS[j].n)
+      return { kind: "tune", ch: ANT_NETS[j].ch, chip: ANT_NETS[j].n + " · CH " + ANT_NETS[j].ch, cls: "ant", act: "OK → tune to " + ANT_NETS[j].n };
+  }
+  for (i = 0; i < g.nets.length; i++) { net = g.nets[i];
+    for (j = 0; j < SPORT_APPS.length; j++) if (SPORT_APPS[j].re.test(net))
+      return { kind: "app", appId: SPORT_APPS[j].appId, name: SPORT_APPS[j].name, chip: net.toUpperCase(), cls: "", act: "OK → " + SPORT_APPS[j].name + " app" };
+  }
+  if (g.nets.length) return { kind: "none", chip: g.nets[0].toUpperCase() + " · NO SUB", cls: "none", act: "not in your services" };
+  return { kind: "none", chip: "TBD", cls: "none", act: "" };
+}
+function teamRow(t, o, state) {
+  var win = state === "in" && t.score !== "" && o.score !== "" && Number(t.score) > Number(o.score);
+  var right = state === "in" ? '<span class="gscore">' + esc(t.score) + "</span>"
+    : (t.record ? '<span class="grec">' + esc(t.record) + "</span>" : "");
+  return '<div class="gtrow' + (win ? " win" : "") + '"><span class="glogo" style="background:#' + esc(t.color) + '">' +
+    (t.logo ? '<img src="' + esc(t.logo) + '" alt=""/>' : "") + esc(t.abbr) + '</span>' +
+    '<span class="gname">' + esc(t.name) + "</span>" + right + "</div>";
+}
+function gameCard(g) {
+  var a = gameAction(g);
+  var live = g.state === "in";
+  var stat = live ? (g.detail || "Live") : fmtGameTime(g.date);
+  var attrs = ' data-act="game" data-kind="' + a.kind + '"' +
+    (a.kind === "tune" ? ' data-ch="' + a.ch + '"' : "") +
+    (a.kind === "app" ? ' data-app="' + a.appId + '" data-name="' + esc(a.name) + '"' : "");
+  return '<div class="gcard' + (a.kind === "none" ? " dim" : "") + '"' + attrs + ">" +
+    '<div class="gc-top"><span class="gleague">' + g.league.name + '</span><span class="gnet ' + a.cls + '">' + esc(a.chip) + "</span></div>" +
+    '<div class="gteams">' + teamRow(g.away, g.home, g.state) + teamRow(g.home, g.away, g.state) + "</div>" +
+    '<div class="gc-bot"><span class="gstat' + (live ? "" : " soon") + '">' + esc(stat) + '</span><span class="gact">' + esc(a.act) + "</span></div></div>";
+}
+function redzoneCard(anyLive) {
+  return '<div class="gcard rz" data-act="redzone"><div class="gc-top"><span class="gleague">NFL</span><span class="gnet">NFL APP</span></div>' +
+    '<div class="rz-title">NFL <span>REDZONE</span></div><div class="rz-sub">' + (anyLive ? "Live now · every Sunday game, whip-around" : "Sundays · every game, whip-around") + "</div>" +
+    '<div class="gc-bot"><span class="gstat">' + (anyLive ? "● LIVE" : "SUNDAY") + '</span><span class="gact">OK → NFL app · your NFL+ Premium</span></div></div>';
+}
+function renderSports(results) {
+  var byLeague = {}, live = [];
+  results.forEach(function (r) {
+    var games = [];
+    (r.events || []).forEach(function (ev) { var g = parseGame(ev, r.league); if (g.state !== "post") games.push(g); });
+    games.sort(function (a, b) { return (a.date < b.date ? -1 : a.date > b.date ? 1 : 0); });
+    byLeague[r.league.key] = games;
+    games.forEach(function (g) { if (g.state === "in") live.push(g); });
+  });
+  var h = "";
+  if (live.length) h += '<div class="rowblk"><div class="rowlabel"><span style="color:#ff4d4d">●</span> Live Now <span class="dim">' + live.length + (live.length === 1 ? " game" : " games") + '</span></div><div class="strip"><div class="stripInner">' + live.map(gameCard).join("") + "</div></div></div>";
+  var now = new Date();
+  var isSunday = now.getDay() === 0;
+  var hourNow = now.getHours() + now.getMinutes() / 60;
+  SPORTS_LEAGUES.forEach(function (l) {
+    var upcoming = (byLeague[l.key] || []).filter(function (g) { return g.state === "pre"; }).slice(0, 40);
+    var cards = upcoming.map(gameCard).join("");
+    if (l.key === "nfl" && isSunday && hourNow >= 9.5 && hourNow <= 17.75 && (byLeague.nfl || []).length) {
+      cards = redzoneCard((byLeague.nfl || []).some(function (g) { return g.state === "in"; })) + cards;
+    }
+    if (!cards) return;
+    h += '<div class="rowblk"><div class="rowlabel">' + l.name + ' <span class="dim">Today</span></div><div class="strip"><div class="stripInner">' + cards + "</div></div></div>";
+  });
+  if (!h) h = '<div class="sportsmsg">No games today across your leagues.</div>';
+  $("sportsWrap").innerHTML = h;
+}
+function loadSports(isRefresh) {
+  if (sportsBusy) return;
+  sportsBusy = true;
+  if (!isRefresh && !$("sportsWrap").querySelector(".rowblk")) $("sportsWrap").innerHTML = '<div class="sportsmsg">Loading today\u2019s games\u2026</div>';
+  var ymd = sportsYmd(new Date());
+  Promise.all(SPORTS_LEAGUES.map(function (l) {
+    return fetch("https://site.api.espn.com/apis/site/v2/sports/" + l.path + "/scoreboard?dates=" + ymd)
+      .then(function (r) { return r.json(); })
+      .then(function (d) { return { league: l, events: d.events || [] }; })
+      .catch(function () { return { league: l, events: [] }; });
+  })).then(function (results) {
+    sportsBusy = false;
+    if (screen !== "sports") return;
+    renderSports(results);
+    rebuildBands(true);
+  }).catch(function () { sportsBusy = false; });
+}
+function gameWatch(el) {
+  var kind = el.getAttribute("data-kind");
+  if (kind === "tune") tuneToChannel(parseInt(el.getAttribute("data-ch"), 10));
+  else if (kind === "app") launchApp(el.getAttribute("data-app"), el.getAttribute("data-name"));
+  else $("status").textContent = "That game is on a service you don't have.";
+}
+/* Channel tuning — the launcher's proven chain (2026-10-20): setSource(TV),
+ * default channel list (the "AIR" mode enum throws on this TV), object-form
+ * tune() callback, then hand off to the TV's own player app. */
+function tuneToChannel(major) {
+  var status = $("status");
+  status.textContent = "Tuning to channel " + major + "\u2026";
+  function openViewer() {
+    try { tizen.application.launch("org.tizen.tv-viewer", function () {}, function () {
+      try { tizen.application.launch("com.samsung.tv.coba.livetv", function () {}, function () { status.textContent = "Couldn't open Live TV."; }); }
+      catch (e) { status.textContent = "Couldn't open Live TV."; }
+    }); } catch (e) { status.textContent = "Couldn't open Live TV."; }
+  }
+  function tuned() { status.textContent = "Channel " + major; setTimeout(openViewer, 350); }
+  function tryTune(ch) {
+    try { tizen.tvchannel.tune(ch, { onsuccess: tuned, onerror: function () {
+      try { tizen.tvchannel.tune(ch, tuned, function () { openViewer(); }, { type: "MAIN" }); } catch (e) { openViewer(); }
+    } }); } catch (e) {
+      try { tizen.tvchannel.tune(ch, tuned, function () { openViewer(); }, { type: "MAIN" }); } catch (e2) { openViewer(); }
+    }
+  }
+  function fetchList() {
+    try { tizen.tvchannel.getChannelList(function (list) {
+      var ch = null;
+      (list || []).forEach(function (c) { if (!ch && Number(c.major) === Number(major)) ch = c; });
+      if (ch) tryTune(ch); else openViewer();
+    }, function () { openViewer(); }); } catch (e) { openViewer(); }
+  }
+  if (!window.tizen || !tizen.tvchannel || !tizen.tvwindow) { openViewer(); return; }
+  try {
+    tizen.tvwindow.getSourceList(function (sources) {
+      var tv = null;
+      (sources || []).forEach(function (s) { if (!tv && s.type === "TV") tv = s; });
+      if (!tv) { fetchList(); return; }
+      try { tizen.tvwindow.setSource(tv, fetchList, fetchList); } catch (e) { fetchList(); }
+    }, fetchList);
+  } catch (e) { fetchList(); }
+}
+/* ================= header ================= */
+var DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+var MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+function tick() {
+  var d = new Date();
+  var h = d.getHours();
+  var greet = h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
+  $("greet").textContent = greet + ", Sameer";
+  $("subline").textContent = DAYS[d.getDay()] + ", " + MONTHS[d.getMonth()] + " " + d.getDate() + " · Everything across your services, in one place";
+  var hh = h % 12; if (hh === 0) hh = 12;
+  var mm = d.getMinutes(); if (mm < 10) mm = "0" + mm;
+  $("clock").textContent = hh + ":" + mm + (h < 12 ? " AM" : " PM");
+}
+function wxIcon(code) {
+  if (code === 0) return "☀️ Clear";
+  if (code <= 2) return "🌤️ Partly cloudy";
+  if (code === 3) return "☁️ Cloudy";
+  if (code === 45 || code === 48) return "🌫️ Fog";
+  if (code >= 51 && code <= 57) return "🌦️ Drizzle";
+  if (code >= 80 && code <= 82) return "🌦️ Showers";
+  if (code >= 61 && code <= 67) return "🌧️ Rain";
+  if (code >= 71 && code <= 86) return "❄️ Snow";
+  if (code >= 95) return "⛈️ Storms";
+  return "";
+}
+function loadWeather() {
+  var c = lsGet("sg_wx_v1", null);
+  if (c && c.html) $("wx").innerHTML = c.html;
+  if (c && (Date.now() - c.t) < 45 * 60 * 1000) return;
+  fetch("https://api.open-meteo.com/v1/forecast?latitude=33.9986&longitude=-117.8103&current=temperature_2m,weather_code&temperature_unit=fahrenheit")
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      if (d && d.current) {
+        $("wx").textContent = "Diamond Bar · " + Math.round(d.current.temperature_2m) + "° " + wxIcon(d.current.weather_code);
+        lsSet("sg_wx_v1", { t: Date.now(), html: $("wx").innerHTML });
+      }
+    }).catch(function () {});
+}
+/* ================= boot ================= */
+registerNodes(maybe);
+registerNodes(recents);
+renderTabs();
+renderFilterBars();
+renderKeys();
+switchView("home");
+loadBrowse();
+tick(); setInterval(tick, 20000);
+loadWeather();
+if (TRAKT_ON) {
+  renderTraktRecRow();
+  if (traktTok) setTimeout(function () { traktSync(false).then(function () { if (screen === "maybe") renderMaybe(); }); }, 2500);
+}
+setTimeout(maybeRestore, 700);
+</script>
+</body>
+</html>

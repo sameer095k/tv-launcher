@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Stream Guide — Sports tab sketch</title>
+<style>
+  @font-face { font-family:"Manrope"; src:url("../streamguide/fonts/manrope.woff2") format("woff2"); }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { width:1920px; height:1080px; overflow:hidden; font-family:"Manrope",sans-serif; color:#eef2f9;
+         background:radial-gradient(1200px 700px at 85% -10%, #1b2742 0%, rgba(27,39,66,0) 60%),
+                    linear-gradient(160deg, #0d1220 0%, #0b0e14 55%, #090b10 100%); }
+  /* header */
+  #hdr { padding:26px 72px 0 72px; display:flex; align-items:flex-end; justify-content:space-between; }
+  #tabs { display:flex; gap:14px; }
+  .tab { font-size:27px; font-weight:600; color:#8fa1bd; padding:12px 26px; border-radius:999px; }
+  .tab.on { color:#0b0e14; background:#ffd34d; font-weight:800; }
+  #clock { text-align:right; color:#aebdd4; font-size:24px; line-height:1.35; }
+  #clock b { color:#eef2f9; font-size:27px; }
+  /* sections */
+  .sec { margin:18px 0 0 72px; }
+  .seclabel { font-size:29px; font-weight:800; letter-spacing:.4px; display:flex; align-items:center; gap:16px; }
+  .seclabel .sub { font-size:23px; font-weight:600; color:#8fa1bd; letter-spacing:0; }
+  .livedot { width:16px; height:16px; border-radius:50%; background:#ff4d4d; box-shadow:0 0 14px #ff4d4d; display:inline-block; }
+  .strip { display:flex; gap:28px; margin-top:12px; }
+  /* game card */
+  .gcard { width:565px; height:204px; border-radius:20px; background:linear-gradient(165deg, #182136 0%, #11182a 100%);
+           padding:18px 26px; position:relative; flex:none; }
+  .gcard.focused { box-shadow:0 0 0 3px #0b0e14, 0 0 0 8px #ffd34d; }
+  .gcard.dim { opacity:.52; }
+  .gc-top { display:flex; justify-content:space-between; align-items:center; }
+  .league { font-size:21px; font-weight:800; letter-spacing:2.5px; color:#8fa1bd; }
+  .net { font-size:21px; font-weight:700; padding:7px 16px; border-radius:999px; background:#233354; color:#cfe0ff; }
+  .net.ant { background:rgba(255,211,77,.16); color:#ffd34d; }
+  .net.none { background:#2a2f3a; color:#8fa1bd; }
+  .teams { margin-top:8px; }
+  .trow { display:flex; align-items:center; gap:16px; margin-top:5px; }
+  .logo { width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+          font-size:15px; font-weight:800; color:#fff; flex:none; }
+  .tname { font-size:25px; font-weight:600; color:#c6d2e6; flex:1; white-space:nowrap; overflow:hidden; }
+  .trow.win .tname { color:#fff; font-weight:800; }
+  .tscore { font-size:28px; font-weight:800; color:#c6d2e6; min-width:52px; text-align:right; }
+  .trow.win .tscore { color:#fff; }
+  .trec { font-size:21px; color:#7787a3; font-weight:600; }
+  .gc-bot { position:absolute; left:26px; right:26px; bottom:12px; display:flex; justify-content:space-between; align-items:center; }
+  .gstat { font-size:23px; font-weight:800; color:#ff6b6b; letter-spacing:.5px; }
+  .gstat.soon { color:#aebdd4; }
+  .gact { font-size:22px; font-weight:700; color:#8fa1bd; }
+  .gcard.focused .gact { color:#ffd34d; }
+  /* redzone card */
+  .gcard.rz { background:linear-gradient(150deg, #4a0f16 0%, #2a0d18 60%, #1a0f1e 100%); }
+  .rz-title { font-size:33px; font-weight:800; letter-spacing:1px; margin-top:8px; }
+  .rz-title span { color:#ff5f57; }
+  .rz-sub { font-size:22px; color:#d8b7bc; margin-top:6px; font-weight:600; }
+  /* finals */
+  .fcard { width:565px; height:72px; border-radius:16px; background:#10182b; padding:0 26px;
+           display:flex; align-items:center; gap:18px; flex:none; }
+  .fcard .league { font-size:19px; }
+  .fscore { font-size:25px; font-weight:700; color:#dbe5f5; white-space:nowrap; }
+  .fscore b { color:#fff; }
+  .ffinal { margin-left:auto; font-size:21px; font-weight:800; color:#7787a3; letter-spacing:1.5px; }
+  #footnote { margin:8px 0 0 72px; font-size:22px; color:#66779a; font-weight:600; }
+  /* status bar */
+  #status { position:absolute; left:50%; transform:translateX(-50%); bottom:26px; background:rgba(6,8,13,.88);
+            color:#c6d2e6; font-size:23px; padding:12px 30px; border-radius:999px; white-space:nowrap; }
+</style></head>
+<body>
+  <div id="hdr">
+    <div id="tabs">
+      <span class="tab">Home</span><span class="tab">Movies</span><span class="tab">Series</span><span class="tab on">Sports</span><span class="tab">Search</span><span class="tab">Maybe</span><span class="tab">Trakt</span>
+    </div>
+    <div id="clock"><b>Sun, Oct 25</b> · 1:24 PM<br>Diamond Bar 79° ☀</div>
+  </div>
+
+  <div class="sec">
+    <div class="seclabel"><span class="livedot"></span> LIVE NOW <span class="sub">3 games</span></div>
+    <div class="strip">
+      <div class="gcard focused">
+        <div class="gc-top"><span class="league">NFL</span><span class="net ant">CBS · CH 2</span></div>
+        <div class="teams">
+          <div class="trow win"><span class="logo" style="background:#e31837">KC</span><span class="tname">Kansas City Chiefs</span><span class="tscore">24</span></div>
+          <div class="trow"><span class="logo" style="background:#00338d">BUF</span><span class="tname">Buffalo Bills</span><span class="tscore">21</span></div>
+        </div>
+        <div class="gc-bot"><span class="gstat">Q3 · 7:42</span><span class="gact">OK → tune to CBS</span></div>
+      </div>
+      <div class="gcard">
+        <div class="gc-top"><span class="league">NBA</span><span class="net">ESPN</span></div>
+        <div class="teams">
+          <div class="trow"><span class="logo" style="background:#552583">LAL</span><span class="tname">Los Angeles Lakers</span><span class="tscore">58</span></div>
+          <div class="trow win"><span class="logo" style="background:#007a33">BOS</span><span class="tname">Boston Celtics</span><span class="tscore">64</span></div>
+        </div>
+        <div class="gc-bot"><span class="gstat">Q2 · 5:13</span><span class="gact">OK → ESPN app</span></div>
+      </div>
+      <div class="gcard dim">
+        <div class="gc-top"><span class="league">NBA</span><span class="net none">PEACOCK · NO SUB</span></div>
+        <div class="teams">
+          <div class="trow win"><span class="logo" style="background:#f58426">NYK</span><span class="tname">New York Knicks</span><span class="tscore">71</span></div>
+          <div class="trow"><span class="logo" style="background:#98002e">MIA</span><span class="tname">Miami Heat</span><span class="tscore">66</span></div>
+        </div>
+        <div class="gc-bot"><span class="gstat">Q3 · 9:05</span><span class="gact">not in your services</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="seclabel">NFL <span class="sub">Today · Week 7</span></div>
+    <div class="strip">
+      <div class="gcard rz">
+        <div class="gc-top"><span class="league">NFL</span><span class="net">NFL APP</span></div>
+        <div class="rz-title">NFL <span>REDZONE</span></div>
+        <div class="rz-sub">Live now · every Sunday game, whip-around</div>
+        <div class="gc-bot"><span class="gstat" style="color:#ff8a80">● LIVE</span><span class="gact">OK → NFL app · your NFL+ Premium</span></div>
+      </div>
+      <div class="gcard">
+        <div class="gc-top"><span class="league">NFL</span><span class="net ant">FOX · CH 11</span></div>
+        <div class="teams">
+          <div class="trow"><span class="logo" style="background:#003594">DAL</span><span class="tname">Dallas Cowboys</span><span class="trec">4–2</span></div>
+          <div class="trow"><span class="logo" style="background:#004c54">PHI</span><span class="tname">Philadelphia Eagles</span><span class="trec">5–1</span></div>
+        </div>
+        <div class="gc-bot"><span class="gstat soon">Today 1:25 PM PT</span><span class="gact">OK → tune to FOX</span></div>
+      </div>
+      <div class="gcard">
+        <div class="gc-top"><span class="league">NFL</span><span class="net ant">NBC · CH 4</span></div>
+        <div class="teams">
+          <div class="trow"><span class="logo" style="background:#ffb612">GB</span><span class="tname">Green Bay Packers</span><span class="trec">4–1–1</span></div>
+          <div class="trow"><span class="logo" style="background:#e64100">CHI</span><span class="tname">Chicago Bears</span><span class="trec">3–3</span></div>
+        </div>
+        <div class="gc-bot"><span class="gstat soon">Tonight 5:20 PM PT</span><span class="gact">OK → tune to NBC</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="seclabel">NBA <span class="sub">Today</span></div>
+    <div class="strip">
+      <div class="gcard">
+        <div class="gc-top"><span class="league">NBA</span><span class="net">PRIME VIDEO</span></div>
+        <div class="teams">
+          <div class="trow"><span class="logo" style="background:#1d428a">GSW</span><span class="tname">Golden State Warriors</span><span class="trec">2–0</span></div>
+          <div class="trow"><span class="logo" style="background:#0e2240">DEN</span><span class="tname">Denver Nuggets</span><span class="trec">1–1</span></div>
+        </div>
+        <div class="gc-bot"><span class="gstat soon">Today 6:00 PM PT</span><span class="gact">OK → Prime Video app</span></div>
+      </div>
+      <div class="gcard">
+        <div class="gc-top"><span class="league">MLB</span><span class="net ant">FOX · CH 11</span></div>
+        <div class="teams">
+          <div class="trow"><span class="logo" style="background:#12284b">TB</span><span class="tname">Tampa Bay Rays</span><span class="trec">WS · Game 3</span></div>
+          <div class="trow"><span class="logo" style="background:#ffc52f;color:#12284b">MIL</span><span class="tname">Milwaukee Brewers</span><span class="trec">Series tied 1–1</span></div>
+        </div>
+        <div class="gc-bot"><span class="gstat soon">Mon 5:08 PM PT</span><span class="gact">OK → tune to FOX</span></div>
+      </div>
+      <div class="gcard">
+        <div class="gc-top"><span class="league">NBA</span><span class="net">ESPN</span></div>
+        <div class="teams">
+          <div class="trow"><span class="logo" style="background:#00538c">DAL</span><span class="tname">Dallas Mavericks</span><span class="trec">1–1</span></div>
+          <div class="trow"><span class="logo" style="background:#0c2340">MIN</span><span class="tname">Minnesota Timberwolves</span><span class="trec">2–0</span></div>
+        </div>
+        <div class="gc-bot"><span class="gstat soon">Today 7:30 PM PT</span><span class="gact">OK → ESPN app</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec" style="margin-top:8px">
+    <div class="seclabel" style="font-size:25px">FINALS <span class="sub">Earlier today</span></div>
+    <div class="strip" style="margin-top:10px">
+      <div class="fcard"><span class="league">NBA</span><span class="fscore">Pacers <b>123</b> @ Pelicans <b>120</b></span><span class="ffinal">FINAL</span></div>
+      <div class="fcard"><span class="league">NFL</span><span class="fscore">Rams <b>27</b> @ Jaguars <b>20</b></span><span class="ffinal">FINAL</span></div>
+      <div class="fcard"><span class="league">NCAAF</span><span class="fscore">Ohio State <b>31</b> @ Penn State <b>24</b></span><span class="ffinal">FINAL</span></div>
+    </div>
+  </div>
+
+  <div id="footnote">WNBA · NCAAB — no games today, rows hidden</div>
+  <div id="status">Data by ESPN · Auto-refreshes while open · OK = watch · Back = exit</div>
+</body></html>
