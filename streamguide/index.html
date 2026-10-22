@@ -6,6 +6,7 @@
 <title>Stream Guide</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
+  :root { --card:#101827; --line:rgba(255,255,255,.09); --ink:#eef3fc; --dim:#8fa2bd; --gold:#ffd34d; --live:#ff6b6b; }
   html, body { width:1920px; height:1080px; overflow:hidden; background:#0b0e14; }
   @font-face { font-family:'Manrope'; src:url('fonts/manrope.woff2') format('woff2'); font-weight:200 800; }
   body { font-family:'Manrope', "Segoe UI", Roboto, Arial, sans-serif; color:#f2f4f8; }
@@ -13,7 +14,7 @@
         background: radial-gradient(1200px 700px at 85% -10%, #1d2a44 0%, #0b0e14 60%); }
   /* ---------- header ---------- */
   #hdr { position:absolute; left:0; top:0; width:1920px; height:150px; z-index:5; }
-  #greet { position:absolute; left:72px; top:34px; font-size:44px; font-weight:600; letter-spacing:.2px; }
+  #greet { position:absolute; left:72px; top:34px; font-size:44px; font-weight:600; }
   #subline { position:absolute; left:74px; top:96px; font-size:24px; color:#9fb0c9; }
   #clockbox { position:absolute; right:72px; top:30px; text-align:right; }
   #clock { font-size:44px; font-weight:600; }
@@ -37,9 +38,9 @@
   .heroShade { position:absolute; left:0; top:0; width:1920px; height:472px;
                background:linear-gradient(90deg, rgba(6,8,13,.93) 30%, rgba(6,8,13,.45) 65%, rgba(6,8,13,.18)); }
   .heroContent { position:absolute; left:72px; bottom:52px; width:1180px; }
-  .heroKick { font-size:22px; letter-spacing:3px; color:#ffd34d; font-weight:700; margin-bottom:14px; }
   .heroTitle { font-size:64px; font-weight:800; line-height:1.05; }
   .heroMeta { margin-top:14px; font-size:26px; color:#cfe0f5; }
+  .mi { margin-right:28px; } .mi:last-child { margin-right:0; }
   .heroMeta .star { color:#ffd34d; }
   .heroDesc { margin-top:12px; font-size:24px; line-height:1.45; color:#aebdd4; width:1020px;
               max-height:72px; overflow:hidden; }
@@ -123,34 +124,36 @@
   /* sports */
   #view-sports .strip { height:262px; }
   #view-sports .stripInner { height:262px; }
-  .gcard { display:inline-block; vertical-align:top; width:565px; height:204px; margin-right:28px; border-radius:20px;
-           background:linear-gradient(165deg,#182136 0%,#11182a 100%); padding:18px 26px; position:relative; }
+  .gcard { display:inline-block; vertical-align:top; width:565px; height:204px; margin-right:28px; border-radius:18px;
+           background:var(--card); border:1px solid var(--line); padding:20px 24px 16px 32px; position:relative; overflow:hidden; }
+  .gedge { position:absolute; left:0; top:0; bottom:0; width:6px; }
+  .gedge i { display:block; height:50%; }
   .gcard.focused { box-shadow:0 0 0 3px #0b0e14, 0 0 0 7px #ffd34d; }
   .gcard.dim { opacity:.52; }
-  .gcard.rz { background:linear-gradient(150deg,#4a0f16 0%,#2a0d18 60%,#1a0f1e 100%); }
+  .gcard.rz { background:#2a0d18; border-color:rgba(255,95,87,.28); }
   .gc-top { display:flex; justify-content:space-between; align-items:center; }
-  .gleague { font-size:21px; font-weight:800; letter-spacing:2.5px; color:#8fa1bd; }
-  .gnet { font-size:21px; font-weight:700; padding:7px 16px; border-radius:999px; background:#233354; color:#cfe0ff; }
-  .gnet.ant { background:rgba(255,211,77,.16); color:#ffd34d; }
-  .gnet.none { background:#2a2f3a; color:#8fa1bd; }
+  .gleague { font-size:20px; font-weight:600; color:var(--dim); }
+  .gnet { font-size:21px; font-weight:700; color:#e8eefb; }
+  .gnet.ant { color:var(--gold); }
+  .gnet.none { color:var(--dim); font-weight:600; }
   .gteams { margin-top:8px; }
   .gtrow { display:flex; align-items:center; gap:16px; margin-top:5px; }
-  .glogo { width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center;
-           font-size:15px; font-weight:800; color:#fff; flex:none; position:relative; overflow:hidden; }
-  .glogo img { position:absolute; left:0; top:0; width:38px; height:38px; object-fit:contain; }
-  .gname { font-size:25px; font-weight:600; color:#c6d2e6; flex:1; white-space:nowrap; overflow:hidden; }
-  .gtrow.win .gname { color:#fff; font-weight:800; }
-  .gscore { font-size:28px; font-weight:800; color:#c6d2e6; min-width:52px; text-align:right; }
-  .gtrow.win .gscore { color:#fff; }
+  .glogo { width:46px; height:46px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+           font-size:15px; font-weight:800; color:#dbe4f2; flex:none; position:relative;
+           background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.10); }
+  .glogo img { position:absolute; left:50%; top:50%; width:35px; height:35px; transform:translate(-50%,-50%); object-fit:contain; }
+  .gname { font-size:26px; font-weight:600; color:var(--ink); flex:1; white-space:nowrap; overflow:hidden; }
+  .gtrow.win .gname { color:var(--ink); font-weight:800; }
+  .gscore { font-size:33px; font-weight:800; color:#c6d2e6; min-width:52px; text-align:right; }
+  .gtrow.win .gscore { color:var(--ink); }
+  .gtrow.lose .gname, .gtrow.lose .gscore { color:rgba(238,243,252,.5); }
   .grec { font-size:21px; color:#7787a3; font-weight:600; }
   .gc-bot { position:absolute; left:26px; right:26px; bottom:12px; display:flex; justify-content:space-between; align-items:center; }
-  .gstat { font-size:23px; font-weight:800; color:#ff6b6b; }
+  .gstat { font-size:23px; font-weight:800; color:var(--live); }
+  @media (prefers-reduced-motion: reduce) { .skelhero, .skelcard { animation:none; } }
   .gstat.soon { color:#aebdd4; }
-  .gact { font-size:22px; font-weight:700; color:#8fa1bd; }
-  .gcard.focused .gact { color:#ffd34d; }
-  .rz-title { font-size:33px; font-weight:800; letter-spacing:1px; margin-top:8px; }
+  .rz-title { font-size:33px; font-weight:800; margin-top:8px; }
   .rz-title span { color:#ff5f57; }
-  .rz-sub { font-size:22px; color:#d8b7bc; margin-top:6px; font-weight:600; }
   .sportsmsg { margin:30px 0 0 72px; font-size:27px; color:#aebdd4; }
   .dbtn { display:inline-block; padding:18px 34px; margin-right:18px; border-radius:14px;
           background:rgba(255,255,255,.10); font-size:27px; color:#f2f4f8; }
@@ -180,7 +183,7 @@
   #dSimStrip { position:relative; height:204px; overflow:hidden; }
   #dSimStrip .stripInner { height:204px; padding-left:2px; padding-top:4px; }
   #pWrap { position:absolute; left:0; top:0; width:1920px; height:1080px; text-align:center; }
-  #pLabel { margin-top:110px; font-size:34px; color:#9fb0c9; letter-spacing:2px; }
+  #pLabel { margin-top:110px; font-size:34px; color:#9fb0c9; }
   #pPoster { margin:36px auto 0 auto; width:340px; height:490px; border-radius:18px; overflow:hidden;
              background:#1a2233; }
   #pPoster img { width:340px; height:490px; object-fit:cover; }
@@ -270,7 +273,7 @@
 
 <div class="plate" id="plate-pick">
   <div id="pWrap">
-    <div id="pLabel">TONIGHT'S PICK</div>
+    <div id="pLabel">Tonight's pick</div>
     <div id="pPoster"></div>
     <div id="pTitle"></div>
     <div id="pMeta"></div>
@@ -641,7 +644,7 @@ function heroHtml(node) {
   if (c.originalReleaseYear) meta.push(c.originalReleaseYear);
   meta.push(node.objectType === "SHOW" ? "Series" : "Movie");
   var gs = genreNames(node, 3);
-  if (gs.length) meta.push(gs.join(" · "));
+  if (gs.length) meta.push(gs.join(", "));
   if (c.runtime) meta.push(c.runtime + " min");
   var score = c.scoring && c.scoring.imdbScore ? ' &nbsp;<span class="star">★ ' + Number(c.scoring.imdbScore).toFixed(1) + "</span>" : "";
   var watch = svcs.length ? '<span class="dbtn ' + svcs[0].key + '" data-act="hwatch" data-app="' + esc(svcs[0].appId) + '" data-name="' + esc(svcs[0].name) + '">▶ Watch on ' + esc(svcs[0].name) + "</span>" : "";
@@ -650,9 +653,8 @@ function heroHtml(node) {
     '<div class="heroShade"></div>' +
     (img ? '<div class="heroPoster"><img src="' + esc(img) + '" alt=""/></div>' : "") +
     '<div class="heroContent">' +
-      '<div class="heroKick">FEATURED' + (svcs.length ? " · " + svcs.map(function (s) { return s.name.toUpperCase(); }).join(" · ") : "") + "</div>" +
       '<div class="heroTitle">' + esc(c.title || "") + "</div>" +
-      '<div class="heroMeta">' + esc(meta.join(" · ")) + score + "</div>" +
+      '<div class="heroMeta">' + meta.map(function (m) { return '<span class="mi">' + esc(m) + "</span>"; }).join("") + score + "</div>" +
       '<div class="heroDesc">' + esc(c.shortDescription || "") + "</div>" +
       '<div class="heroBtns">' + watch +
         '<span class="dbtn" data-act="hdetails">Details</span>' +
@@ -1031,7 +1033,7 @@ function renderMaybe() {
     return;
   }
   w.innerHTML =
-    '<div class="rowblk"><div class="rowlabel">Movie Night</div><div style="margin-left:72px"><span class="dbtn" id="pickBtn">🎲 Pick for Tonight</span></div></div>' +
+    '<div class="rowblk"><div class="rowlabel">Movie Night</div><div style="margin-left:72px"><span class="dbtn" id="pickBtn">Pick for Tonight</span></div></div>' +
     '<div class="rowblk"><div class="rowlabel">Your Maybe List <span class="dim">' + maybe.length + " saved</span></div>" + stripHtml(maybe) + "</div>" +
     (seen.length ? '<div class="rowblk"><div class="rowlabel">Already Seen <span class="dim">' + seen.length + " · open one to undo</span></div>" + stripHtml(seen.slice().reverse()) + "</div>" : "") +
     traktWlRowHtml();
@@ -1832,15 +1834,15 @@ function openDetail(node) {
   if (c.originalReleaseYear) meta.push(c.originalReleaseYear);
   meta.push(node.objectType === "SHOW" ? "Series" : "Movie");
   var gnames = genreNames(node, 3);
-  if (gnames.length) meta.push(gnames.join(" · "));
+  if (gnames.length) meta.push(gnames.join(", "));
   if (c.runtime) meta.push(c.runtime + " min");
   var score = c.scoring && c.scoring.imdbScore ? ' &nbsp;<span class="star">★ ' + Number(c.scoring.imdbScore).toFixed(1) + "</span> IMDb" : "";
-  $("dMeta").innerHTML = esc(meta.join(" · ")) + score;
+  $("dMeta").innerHTML = meta.map(function (m) { return '<span class="mi">' + esc(m) + "</span>"; }).join("") + score;
   $("dDesc").textContent = c.shortDescription || "";
   var svcs = servicesOf(node);
   var avail = availText(node);
   $("dAvail").innerHTML =
-    (svcs.length ? "Included with your " + svcs.map(function (s) { return s.name; }).join(" · ") + "." : "Not included in Netflix, Disney+, or Prime Video subscriptions.") +
+    (svcs.length ? "Included with your " + svcs.map(function (s) { return s.name; }).join(", ") + "." : "Not included in Netflix, Disney+, or Prime Video subscriptions.") +
     (avail ? "<br/>" + esc(avail) + "." : "");
   curTrailer = null;
   renderDetailBtns();
@@ -1922,10 +1924,10 @@ function openPick() {
   $("pTitle").textContent = c.title || "";
   var svcs = servicesOf(node);
   $("pMeta").textContent = [c.originalReleaseYear || "", node.objectType === "SHOW" ? "Series" : "Movie",
-    svcs.length ? "on " + svcs.map(function (s) { return s.name; }).join(" · ") : ""].filter(Boolean).join(" · ");
+    svcs.length ? "on " + svcs.map(function (s) { return s.name; }).join(", ") : ""].filter(Boolean).join(", ");
   $("pBtns").innerHTML =
     '<span class="dbtn" data-act="pdetails">Details</span>' +
-    '<span class="dbtn" data-act="pagain">🎲 Pick Again</span>' +
+    '<span class="dbtn" data-act="pagain">Pick Again</span>' +
     '<span class="dbtn" data-act="pclose">Close</span>';
   $("plate-pick").classList.add("on");
   screen = "pick";
@@ -2098,20 +2100,21 @@ function gameAction(g) {
   var i, j, net;
   for (i = 0; i < g.nets.length; i++) { net = g.nets[i];
     for (j = 0; j < ANT_NETS.length; j++) if (net.toUpperCase() === ANT_NETS[j].n)
-      return { kind: "tune", ch: ANT_NETS[j].ch, chip: ANT_NETS[j].n + " · CH " + ANT_NETS[j].ch, cls: "ant", act: "OK → tune to " + ANT_NETS[j].n };
+      return { kind: "tune", ch: ANT_NETS[j].ch, chip: ANT_NETS[j].n + " " + ANT_NETS[j].ch, cls: "ant", act: "OK → tune to " + ANT_NETS[j].n };
   }
   for (i = 0; i < g.nets.length; i++) { net = g.nets[i];
     for (j = 0; j < SPORT_APPS.length; j++) if (SPORT_APPS[j].re.test(net))
-      return { kind: "app", appId: SPORT_APPS[j].appId, name: SPORT_APPS[j].name, chip: net.toUpperCase(), cls: "", act: "OK → " + SPORT_APPS[j].name + " app" };
+      return { kind: "app", appId: SPORT_APPS[j].appId, name: SPORT_APPS[j].name, chip: net, cls: "", act: "OK → " + SPORT_APPS[j].name + " app" };
   }
-  if (g.nets.length) return { kind: "none", chip: g.nets[0].toUpperCase() + " · NO SUB", cls: "none", act: "not in your services" };
+  if (g.nets.length) return { kind: "none", chip: g.nets[0], cls: "none", act: "not in your services" };
   return { kind: "none", chip: "TBD", cls: "none", act: "" };
 }
 function teamRow(t, o, state) {
   var win = state === "in" && t.score !== "" && o.score !== "" && Number(t.score) > Number(o.score);
+  var lose = state === "in" && t.score !== "" && o.score !== "" && Number(t.score) < Number(o.score);
   var right = state === "in" ? '<span class="gscore">' + esc(t.score) + "</span>"
     : (t.record ? '<span class="grec">' + esc(t.record) + "</span>" : "");
-  return '<div class="gtrow' + (win ? " win" : "") + '"><span class="glogo" style="background:#' + esc(t.color) + '">' +
+  return '<div class="gtrow' + (win ? " win" : "") + (lose ? " lose" : "") + '"><span class="glogo">' +
     (t.logo ? '<img src="' + esc(t.logo) + '" alt=""/>' : "") + esc(t.abbr) + '</span>' +
     '<span class="gname">' + esc(t.name) + "</span>" + right + "</div>";
 }
@@ -2123,14 +2126,15 @@ function gameCard(g) {
     (a.kind === "tune" ? ' data-ch="' + a.ch + '"' : "") +
     (a.kind === "app" ? ' data-app="' + a.appId + '" data-name="' + esc(a.name) + '"' : "");
   return '<div class="gcard' + (a.kind === "none" ? " dim" : "") + '"' + attrs + ">" +
+    '<span class="gedge"><i style="background:#' + esc(g.away.color || "44506b") + '"></i><i style="background:#' + esc(g.home.color || "44506b") + '"></i></span>' +
     '<div class="gc-top"><span class="gleague">' + g.league.name + '</span><span class="gnet ' + a.cls + '">' + esc(a.chip) + "</span></div>" +
     '<div class="gteams">' + teamRow(g.away, g.home, g.state) + teamRow(g.home, g.away, g.state) + "</div>" +
     '<div class="gc-bot"><span class="gstat' + (live ? "" : " soon") + '">' + esc(stat) + "</span></div></div>";
 }
 function redzoneCard(anyLive) {
-  return '<div class="gcard rz" data-act="redzone"><div class="gc-top"><span class="gleague">NFL</span><span class="gnet">NFL APP</span></div>' +
+  return '<div class="gcard rz" data-act="redzone"><span class="gedge"><i style="background:#c8102e;height:100%"></i></span><div class="gc-top"><span class="gleague">NFL</span><span class="gnet">NFL APP</span></div>' +
     '<div class="rz-title">NFL <span>REDZONE</span></div>' +
-    '<div class="gc-bot"><span class="gstat">' + (anyLive ? "● LIVE" : "SUNDAY") + "</span></div></div>";
+    '<div class="gc-bot"><span class="gstat">' + (anyLive ? "LIVE" : "SUNDAY") + "</span></div></div>";
 }
 function renderSports(results) {
   var byLeague = {}, live = [];
@@ -2232,15 +2236,15 @@ function tick() {
   $("clock").textContent = hh + ":" + mm + (h < 12 ? " AM" : " PM");
 }
 function wxIcon(code) {
-  if (code === 0) return "☀️ Clear";
-  if (code <= 2) return "🌤️ Partly cloudy";
-  if (code === 3) return "☁️ Cloudy";
-  if (code === 45 || code === 48) return "🌫️ Fog";
-  if (code >= 51 && code <= 57) return "🌦️ Drizzle";
-  if (code >= 80 && code <= 82) return "🌦️ Showers";
-  if (code >= 61 && code <= 67) return "🌧️ Rain";
-  if (code >= 71 && code <= 86) return "❄️ Snow";
-  if (code >= 95) return "⛈️ Storms";
+  if (code === 0) return "Clear";
+  if (code <= 2) return "Partly cloudy";
+  if (code === 3) return "Cloudy";
+  if (code === 45 || code === 48) return "Fog";
+  if (code >= 51 && code <= 57) return "Drizzle";
+  if (code >= 80 && code <= 82) return "Showers";
+  if (code >= 61 && code <= 67) return "Rain";
+  if (code >= 71 && code <= 86) return "Snow";
+  if (code >= 95) return "Storms";
   return "";
 }
 function loadWeather() {
