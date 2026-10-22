@@ -106,10 +106,10 @@ var DEFAULT_KEYWORDS = [
 ];
 var LIVETV_ID = "com.samsung.tv.coba.livetv";
 var CHANNELS = [
-  { major: 2,  name: "CBS", sub: "KCBS · 2.1" },
-  { major: 4,  name: "NBC", sub: "KNBC · 4.1" },
-  { major: 7,  name: "ABC", sub: "KABC · 7.1" },
-  { major: 11, name: "FOX", sub: "KTTV · 11.1" }
+  { major: 2,  name: "CBS" },
+  { major: 4,  name: "NBC" },
+  { major: 7,  name: "ABC" },
+  { major: 11, name: "FOX" }
 ];
 var SELF_ID = "SameerTV01.Launcher";
 
@@ -728,7 +728,6 @@ function startArrange() {
   switchView("apps");
   var first = homeItemEls()[0];
   if (first) { first.focus(); markGrabbed(); }
-  toast("Arrange: arrow keys move the gold app, OK when done", 3500);
 }
 function exitArrange() {
   if (!state.arranging) return;
@@ -777,8 +776,7 @@ function renderChannels() {
     btn.className = "channel focusable";
     btn.innerHTML =
       '<span class="ch-num">' + ch.major + "</span>" +
-      '<span class="ch-name">' + esc(ch.name) + "</span>" +
-      '<span class="ch-sub">' + esc(ch.sub) + "</span>";
+      '<span class="ch-name">' + esc(ch.name) + "</span>";
     (function (major) {
       btn.addEventListener("click", function () { tuneChannel(major); });
     })(ch.major);
@@ -963,9 +961,7 @@ function openSamsungBar(kind) {
   var st = $("set-status");
   var isApps = kind === "apps";
   toast(isApps ? "Opening Samsung Apps\u2026" : "Opening TV Settings\u2026");
-  if (st) st.textContent = isApps
-    ? "Samsung bar open — Apps tile = store."
-    : "Samsung bar open — \u2699 = Settings.";
+  if (st) st.textContent = "";
   try {
     TZ.application.launch("com.samsung.tv.csfs",
       function () {},

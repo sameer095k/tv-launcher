@@ -182,3 +182,15 @@ re-derive them.
   mid-file (a ~900 KB file repeatedly arrived cut at exactly 229,376
   bytes). Split big files into sub-200 KB chunks, verify each chunk's
   size, reassemble, and **md5-verify the whole file** before signing.
+
+## Copy rule (2026-10-22, his standing rule)
+
+"Cut taglines, helper text and secondary labels. If a screen needs
+them to make sense, fix the layout." Applied to both apps the day it
+was adopted: Stream Guide lost its standing status legend (the status
+line is message-only now), row sub-labels, per-card action hints, and
+the Trakt pitch paragraph; the launcher lost its infolines, hints,
+the "No ads" tagline, channel-tile sub-labels, and the Samsung-bar
+explainer texts. Transient state (progress, errors, tuning) stays —
+it is not a label. Also standing: elevate UX, DX and AX together,
+without breaking anything.
