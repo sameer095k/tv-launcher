@@ -219,7 +219,7 @@
 <div id="bg"></div>
 <div id="hdr">
   <div id="greet">Stream Guide</div>
-  <div id="subline">Everything across your services, in one place</div>
+  <div id="subline"></div>
   <div id="clockbox"><div id="clock">--:--</div><div id="wx">Diamond Bar</div></div>
 </div>
 <div id="tabs"></div>
@@ -2227,7 +2227,7 @@ function tick() {
   var h = d.getHours();
   var greet = h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
   $("greet").textContent = greet + ", Sameer";
-  $("subline").textContent = DAYS[d.getDay()] + ", " + MONTHS[d.getMonth()] + " " + d.getDate() + " · Everything across your services, in one place";
+  $("subline").textContent = DAYS[d.getDay()] + ", " + MONTHS[d.getMonth()] + " " + d.getDate();
   var hh = h % 12; if (hh === 0) hh = 12;
   var mm = d.getMinutes(); if (mm < 10) mm = "0" + mm;
   $("clock").textContent = hh + ":" + mm + (h < 12 ? " AM" : " PM");
