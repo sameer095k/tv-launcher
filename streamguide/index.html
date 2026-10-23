@@ -7,7 +7,7 @@
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   :root { --font:'Manrope', "Segoe UI", Roboto, Arial, sans-serif;
-    --bg:#0b0e14; --text:#f2f4f8; --white:#fff; --black:#000; --ink:#eef3fc; --ink-2:#aebdd4; --ink-3:#9fb0c9;
+    --bg:#0b0e14; --badge-ink:#16181d; --text:#f2f4f8; --white:#fff; --black:#000; --ink:#eef3fc; --ink-2:#aebdd4; --ink-3:#9fb0c9;
     --ink-4:#dbe4f2; --ink-5:#cfe0f5; --ink-6:#e8edf5; --ink-7:#eef2f9; --ink-8:#dfe8fa; --ink-9:#c9d6ea;
     --ink-10:#dfe7f3; --ink-11:#a7b8d0; --ink-12:#e8eefb; --ink-13:#cfd8dc; --ink-14:#c6d2e6; --ink-15:#dde6f2;
     --ink-16:#a9bcd8; --ink-17:#e6edf7; --ink-50:rgba(238,243,252,.5); --dim:#8fa2bd; --dim-2:#7787a3; --dim-3:#5f7292;
@@ -99,6 +99,8 @@
   .card.sm .poster img { width:132px; height:190px; }
   .card.sm .score { font-size:16px; padding:2px 6px; }
   .card.sm .bdg { min-width:26px; font-size:15px; padding:2px 5px; }
+  .newep { position:absolute; top:8px; left:8px; z-index:2; background:var(--gold); color:var(--badge-ink);
+    font-size:14px; font-weight:800; padding:3px 8px; border-radius:6px; }
   /* ---------- filter bars & chips ---------- */
   .secbar { position:absolute; left:0; top:0; width:1920px; height:76px; }
   .fbar { margin:8px 0 0 72px; }
@@ -1294,6 +1296,33 @@ var traktWatchlist = lsGet("sg_traktwl_v1", []);
 var traktRecs = lsGet("sg_traktrec_v1", null);
 var traktShows = lsGet("sg_traktshows_v1", []);
 var traktCal = lsGet("sg_traktcal_v1", null);
+var newEpByTid = {};
+function computeNewEps() {
+  newEpByTid = {};
+  if (!traktCal) return;
+  var byTid = {};
+  traktShows.forEach(function (e) { byTid[e.tid] = e; });
+  (traktCal.newS || []).forEach(function (e) {
+    var o = newEpByTid[e.tid] = newEpByTid[e.tid] || { eps: 0, season: false };
+    o.season = true;
+  });
+  var cutoff = Date.now() - 14 * 86400000;
+  (traktCal.past || []).forEach(function (e) {
+    if (!e.fa || new Date(e.fa).getTime() < cutoff) return;
+    var sh = byTid[e.tid]; if (!sh) return;
+    var mx = sh.maxSeason || 0, watched = false;
+    if (e.s < mx) watched = true;
+    else if (e.s === mx && sh.weps && ("," + sh.weps + ",").indexOf("," + e.n + ",") >= 0) watched = true;
+    if (watched) return;
+    var o = newEpByTid[e.tid] = newEpByTid[e.tid] || { eps: 0, season: false };
+    o.eps++;
+  });
+}
+function newEpBadge(tid) {
+  var o = newEpByTid[tid]; if (!o) return "";
+  var t = o.season ? "NEW SEASON" : (o.eps > 1 ? "NEW EP \u00d7" + o.eps : "NEW EP");
+  return '<div class="newep">' + t + "</div>";
+}
 var traktLastSync = 0;
 var traktConn = null, traktAtt = 0;
 function traktHeaders() {
@@ -1353,6 +1382,7 @@ function traktPushHistory(node, add) {
       if (traktCal) {
         traktCal.up = (traktCal.up || []).filter(function (e) { return e.tid !== m.tid; });
         traktCal.newS = (traktCal.newS || []).filter(function (e) { return e.tid !== m.tid; });
+      traktCal.past = (traktCal.past || []).filter(function (e) { return e.tid !== m.tid; });
         lsSet("sg_traktcal_v1", traktCal);
       }
       if (typeof detailReturn !== "undefined" && detailReturn && detailReturn.screen === "trakt") renderTrakt();
@@ -1377,7 +1407,7 @@ function traktPushWatchlist(node, add) {
 function tmdbStripHtml(list) {
   return '<div class="strip"><div class="stripInner">' + list.map(function (r) {
     nodeReg["tmdb:" + r.tid] = { tmdbResolve: { tid: r.tid, title: r.title, year: r.year, type: r.type === "tv" ? "SHOW" : "MOVIE" } };
-    return '<div class="card" data-jwid="tmdb:' + r.tid + '"><div class="poster">' + (r.poster ? '<img loading="lazy" src="' + esc(tmdbImg(r.poster, "w342")) + '" alt=""/>' : "") + "</div></div>";
+    return '<div class="card" data-jwid="tmdb:' + r.tid + '"><div class="poster">' + (r.poster ? '<img loading="lazy" src="' + esc(tmdbImg(r.poster, "w342")) + '" alt=""/>' : "") + (r.type === "tv" ? newEpBadge(r.tid) : "") + "</div></div>";
   }).join("") + "</div></div>";
 }
 function traktWlRowHtml() {
@@ -1454,9 +1484,11 @@ function traktLoadCal() {
   var now = new Date();
   var upStart = traktDateStr(now);
   var premStart = traktDateStr(new Date(now.getTime() - 75 * 86400000));
+  var pastStart = traktDateStr(new Date(now.getTime() - 14 * 86400000));
   return Promise.all([
     traktFetch("GET", "/calendars/my/shows/" + upStart + "/31").catch(function () { return null; }),
-    traktFetch("GET", "/calendars/my/premieres/" + premStart + "/75").catch(function () { return null; })
+    traktFetch("GET", "/calendars/my/premieres/" + premStart + "/75").catch(function () { return null; }),
+    traktFetch("GET", "/calendars/my/shows/" + pastStart + "/14").catch(function () { return null; })
   ]).then(function (rs) {
     var up = (rs[0] || []).map(calEntry).filter(Boolean);
     up.sort(function (a, b) { return a.fa < b.fa ? -1 : 1; });
@@ -1471,10 +1503,13 @@ function traktLoadCal() {
       newS.push({ tid: e.tid, type: "tv", title: e.title, year: e.year, poster: null, s: e.s, fa: e.fa });
     });
     newS.sort(function (a, b) { return a.fa < b.fa ? 1 : -1; });
-    if (up.length || newS.length || traktCal) {
-      traktCal = { ts: Date.now(), up: up.slice(0, 30), newS: newS.slice(0, 14) };
+    var past = (rs[2] || []).map(calEntry).filter(Boolean);
+    past.sort(function (a, b) { return a.fa < b.fa ? 1 : -1; });
+    if (up.length || newS.length || past.length || traktCal) {
+      traktCal = { ts: Date.now(), up: up.slice(0, 30), newS: newS.slice(0, 14), past: past.slice(0, 40) };
       lsSet("sg_traktcal_v1", traktCal);
     }
+    computeNewEps();
     fillShowPosters();
     if (screen === "trakt") { renderTrakt(); rebuildBands(true); }
   });
@@ -1540,7 +1575,9 @@ function traktSync(manual) {
         var s = x.show || {}; var ids = s.ids || {};
         var mx = 0;
         (x.seasons || []).forEach(function (sn) { if (sn.number && sn.number > mx && (sn.episodes || []).length) mx = sn.number; });
-        return { tid: ids.tmdb, trakt: ids.trakt || 0, title: s.title || "", year: s.year || 0, poster: null, last: x.last_watched_at || "", maxSeason: mx };
+        var weps = "";
+        (x.seasons || []).forEach(function (sn) { if (sn.number === mx) weps = (sn.episodes || []).map(function (ep) { return ep.number; }).join(","); });
+        return { tid: ids.tmdb, trakt: ids.trakt || 0, title: s.title || "", year: s.year || 0, poster: null, last: x.last_watched_at || "", maxSeason: mx, weps: weps };
       }).filter(function (e) { return e.tid; });
       traktShows.forEach(function (e) { if (oldP[e.tid]) e.poster = oldP[e.tid]; });
       lsSet("sg_traktshows_v1", traktShows);
@@ -2284,6 +2321,7 @@ loadBrowse();
 tick(); setInterval(tick, 20000);
 loadWeather();
 if (TRAKT_ON) {
+  computeNewEps();
   renderTraktRecRow();
   if (traktTok) setTimeout(function () { traktSync(false).then(function () { if (screen === "maybe") renderMaybe(); }); }, 2500);
 }

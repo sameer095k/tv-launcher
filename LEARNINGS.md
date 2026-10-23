@@ -206,3 +206,9 @@ without breaking anything.
 - The one visual change: the app background is flat var(--bg) — the radial wash is gone; depth comes from the stepped flat panels + hairlines, per Hallmark gate 29. Render-checked against the v2.9.0 cards: identical but for the corner glow.
 - Scrim verdict on inspection: the hero shade already follows the imagery rule (ink-toned, text-edge weighted, 93% to 18%); left as is.
 - Ship-script lesson, learned the expensive way: a Python str.replace() on a string you already mutated in memory silently no-ops. Splice by index, and verify the result in the written file, never in the variable.
+
+## Stream Guide v2.11.0 — new-episode badges (2026-10-22)
+
+- Trakt-sourced show cards (Your Shows, New Season Out, Watchlist, Recommended) now carry a gold corner badge when there is something new to watch: NEW SEASON (a season past his watched max premiered in the last 75 days — the premieres calendar he already synced) or NEW EP / NEW EP xN (episodes aired in the last 14 days he has not watched).
+- Data: one extra sync fetch (past-14-days shows calendar, stored as traktCal.past) + the watched/shows distillation now keeps `weps` — the watched episode numbers of each show's latest season only, so "unwatched" is exact without storing his whole episode history. Shows he does not watch get no badge; watched episodes never count. Unit-tested on fixtures, badge render-checked.
+- Cache note: sg_traktcal_v1 entries from before v2.11 lack `past` — all readers default it to [] and the next sync fills it.
