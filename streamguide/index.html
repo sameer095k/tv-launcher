@@ -2160,9 +2160,9 @@ function gameAction(g) {
   return { kind: "none", chip: "TBD", cls: "none", act: "" };
 }
 function teamRow(t, o, state) {
-  var win = state === "in" && t.score !== "" && o.score !== "" && Number(t.score) > Number(o.score);
-  var lose = state === "in" && t.score !== "" && o.score !== "" && Number(t.score) < Number(o.score);
-  var right = state === "in" ? '<span class="gscore">' + esc(t.score) + "</span>"
+  var win = (state === "in" || state === "post") && t.score !== "" && o.score !== "" && Number(t.score) > Number(o.score);
+  var lose = (state === "in" || state === "post") && t.score !== "" && o.score !== "" && Number(t.score) < Number(o.score);
+  var right = (state === "in" || state === "post") ? '<span class="gscore">' + esc(t.score) + "</span>"
     : (t.record ? '<span class="grec">' + esc(t.record) + "</span>" : "");
   return '<div class="gtrow' + (win ? " win" : "") + (lose ? " lose" : "") + '"><span class="glogo">' +
     (t.logo ? '<img src="' + esc(t.logo) + '" alt=""/>' : "") + esc(t.abbr) + '</span>' +
@@ -2171,7 +2171,7 @@ function teamRow(t, o, state) {
 function gameCard(g) {
   var a = gameAction(g);
   var live = g.state === "in";
-  var stat = live ? (g.detail || "Live") : fmtGameTime(g.date);
+  var stat = live ? (g.detail || "Live") : g.state === "post" ? (g.detail || "Final") : fmtGameTime(g.date);
   var attrs = ' data-act="game" data-kind="' + a.kind + '"' +
     (a.kind === "tune" ? ' data-ch="' + a.ch + '"' : "") +
     (a.kind === "app" ? ' data-app="' + a.appId + '" data-name="' + esc(a.name) + '"' : "");
@@ -2187,26 +2187,30 @@ function redzoneCard(anyLive) {
     '<div class="gc-bot"><span class="gstat">' + (anyLive ? "LIVE" : "SUNDAY") + "</span></div></div>";
 }
 function renderSports(results) {
-  var byLeague = {}, live = [];
+  var byLeague = {};
+  var stateRank = function (g) { return g.state === "in" ? 0 : g.state === "pre" ? 1 : 2; };
+  var actRank = function (g) { var a = gameAction(g); return a.kind === "tune" ? 0 : a.kind === "app" ? 1 : 2; };
   results.forEach(function (r) {
     var games = [];
-    (r.events || []).forEach(function (ev) { var g = parseGame(ev, r.league); if (g.state !== "post") games.push(g); });
-    games.sort(function (a, b) { return (a.date < b.date ? -1 : a.date > b.date ? 1 : 0); });
+    (r.events || []).forEach(function (ev) { games.push(parseGame(ev, r.league)); });
+    games = games.map(function (g, i) { return [g, i]; }).sort(function (a, b) {
+      var d = stateRank(a[0]) - stateRank(b[0]);
+      if (d) return d;
+      if (a[0].state === "in") { var w = actRank(a[0]) - actRank(b[0]); if (w) return w; }
+      if (a[0].date !== b[0].date) return a[0].date < b[0].date ? -1 : 1;
+      return a[1] - b[1];
+    }).map(function (p) { return p[0]; });
     byLeague[r.league.key] = games;
-    games.forEach(function (g) { if (g.state === "in") live.push(g); });
   });
-  var actRank = function (g) { var a = gameAction(g); return a.kind === "tune" ? 0 : a.kind === "app" ? 1 : 2; };
-  live = live.map(function (g, i) { return [actRank(g), i, g]; }).sort(function (a, b) { return a[0] - b[0] || a[1] - b[1]; }).map(function (p) { return p[2]; });
   var h = "";
-  if (live.length) h += '<div class="rowblk"><div class="rowlabel"><span style="color:#ff4d4d">●</span> Live Now </div><div class="strip"><div class="stripInner">' + live.map(gameCard).join("") + "</div></div></div>";
   var now = new Date();
   var isSunday = now.getDay() === 0;
   var hourNow = now.getHours() + now.getMinutes() / 60;
   SPORTS_LEAGUES.forEach(function (l) {
-    var upcoming = (byLeague[l.key] || []).filter(function (g) { return g.state === "pre"; }).slice(0, 40);
-    var cards = upcoming.map(gameCard).join("");
-    if (l.key === "nfl" && isSunday && hourNow >= 9.5 && hourNow <= 17.75 && (byLeague.nfl || []).length) {
-      cards = redzoneCard((byLeague.nfl || []).some(function (g) { return g.state === "in"; })) + cards;
+    var all = (byLeague[l.key] || []).slice(0, 40);
+    var cards = all.map(gameCard).join("");
+    if (l.key === "nfl" && isSunday && hourNow >= 9.5 && hourNow <= 17.75 && all.length) {
+      cards = redzoneCard(all.some(function (g) { return g.state === "in"; })) + cards;
     }
     if (!cards) return;
     h += '<div class="rowblk"><div class="rowlabel">' + l.name + '</div><div class="strip"><div class="stripInner">' + cards + "</div></div></div>";
