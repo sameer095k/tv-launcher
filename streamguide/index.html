@@ -45,23 +45,8 @@
   .view { position:absolute; left:0; top:252px; width:1920px; height:828px; overflow:hidden; display:none; }
   .view.on { display:block; }
   .vwrap { position:absolute; left:0; width:1920px; }
-  /* ---------- hero ---------- */
-  .heroblk { position:relative; width:1920px; height:472px; overflow:hidden; margin-bottom:18px; background:var(--panel-2); }
-  .heroBg { position:absolute; left:0; top:-140px; width:1920px; height:760px; object-fit:cover; opacity:.5; }
-  .heroShade { position:absolute; left:0; top:0; width:1920px; height:472px;
-               background:linear-gradient(90deg, var(--scrim-93) 30%, var(--scrim-45) 65%, var(--scrim-18)); }
-  .heroContent { position:absolute; left:72px; bottom:52px; width:1180px; }
-  .heroTitle { font-size:64px; font-weight:800; line-height:1.05; }
-  .heroMeta { margin-top:14px; font-size:26px; color:var(--ink-5); }
+  /* ---------- meta rows (detail) ---------- */
   .mi { margin-right:28px; } .mi:last-child { margin-right:0; }
-  .heroMeta .star { color:var(--gold); }
-  .heroDesc { margin-top:12px; font-size:24px; line-height:1.45; color:var(--ink-2); width:1020px;
-              max-height:72px; overflow:hidden; }
-  .heroBtns { margin-top:24px; }
-  .heroPoster { position:absolute; right:130px; top:52px; width:224px; height:323px; border-radius:16px;
-                overflow:hidden; box-shadow:0 14px 30px var(--k55); background:var(--panel); }
-  .heroPoster img { width:224px; height:323px; object-fit:cover; }
-  .skelhero { width:1920px; height:472px; background:linear-gradient(100deg, var(--skel-1) 40%, var(--skel-2) 50%, var(--skel-1) 60%); background-size:200% 100%; animation:sksweep 1.15s linear infinite; }
   /* ---------- rows & cards ---------- */
   .rowblk { margin:0 0 26px 0; }
   .rowlabel { margin:0 0 12px 72px; font-size:29px; font-weight:600; color:var(--ink-7); }
@@ -166,7 +151,7 @@
   .grec { font-size:23px; color:var(--dim-2); font-weight:600; }
   .gc-bot { position:absolute; left:30px; right:28px; bottom:14px; display:flex; justify-content:space-between; align-items:center; }
   .gstat { font-size:26px; font-weight:800; color:var(--live); }
-  @media (prefers-reduced-motion: reduce) { .skelhero, .skelcard { animation:none; } }
+  @media (prefers-reduced-motion: reduce) { .skelcard { animation:none; } }
   .gstat.soon { color:var(--ink-2); }
   .rz-title { font-size:38px; font-weight:800; margin-top:8px; }
   .rz-title span { color:var(--rz-red); }
@@ -254,19 +239,14 @@
   .gleague { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .gnet { flex:none; }
   /* ---------- day theme ---------- */
-  html.day { --bg:#eef0f3; --text:#14161a; --card:#ffffff; --panel:#ffffff; --panel-2:#f4f6f9; --panel-3:#e8ecf1;
-    --ink:#14161a; --ink-2:#3c4656; --ink-3:#5a6678; --ink-4:#2b3240; --ink-5:#3c4656; --ink-6:#14161a; --ink-7:#1c222c;
-    --ink-8:#2b3240; --ink-9:#3c4656; --ink-10:#232a35; --ink-11:#5a6678; --ink-12:#1c222c; --ink-13:#3c4656;
-    --ink-14:#232a35; --ink-15:#2b3240; --ink-16:#3c4656; --ink-17:#232a35; --ink-50:rgba(20,22,26,.5);
-    --dim:#5a6678; --dim-2:#71808f; --dim-3:#93a1b3;
-    --line:rgba(20,22,26,.10); --w07:rgba(20,22,26,.07); --w08:rgba(20,22,26,.08); --w10:rgba(20,22,26,.10);
-    --w15:rgba(20,22,26,.15); --w16:rgba(20,22,26,.16); --w20:rgba(20,22,26,.20);
-    --skel-1:#dde2e9; --skel-2:#ccd3dd; --skel-3:#e4e8ee; --skel-4:#c3ccd8; --ring:#14161a; }
-  html.day .heroTitle { color:#f2f4f8; }
-  html.day .heroMeta { color:#cfe0f5; }
-  html.day .heroDesc { color:#dbe4f2; }
-  html.day .heroblk .dbtn { background:rgba(255,255,255,.10); color:#f2f4f8; }
-  html.day .heroblk .dbtn.focused { box-shadow:0 0 0 3px #0b0e14, 0 0 0 8px #fff; }
+  html.day { --bg:#f3ede1; --text:#241c12; --card:#fdfaf3; --panel:#fdfaf3; --panel-2:#f8f3e7; --panel-3:#eee5d0;
+    --ink:#241c12; --ink-2:#4a3f2c; --ink-3:#77694f; --ink-4:#33291a; --ink-5:#4a3f2c; --ink-6:#241c12; --ink-7:#2b2113;
+    --ink-8:#33291a; --ink-9:#4a3f2c; --ink-10:#33291a; --ink-11:#77694f; --ink-12:#2b2113; --ink-13:#5d4f38;
+    --ink-14:#4a3f2c; --ink-15:#3a2e1c; --ink-16:#77694f; --ink-17:#2b2113; --ink-50:rgba(36,28,18,.5);
+    --dim:#77694f; --dim-2:#8a7a5c; --dim-3:#a5936f;
+    --line:rgba(36,28,18,.12); --w07:rgba(36,28,18,.07); --w08:rgba(36,28,18,.08); --w10:rgba(36,28,18,.10);
+    --w15:rgba(36,28,18,.15); --w16:rgba(36,28,18,.16); --w20:rgba(36,28,18,.20);
+    --skel-1:#e7dcc4; --skel-2:#ded0ae; --skel-3:#efe7d2; --skel-4:#e2d5b8; --ring:#241c12; }
   html.day #plate-detail, html.day #plate-pick { color:#f2f4f8; }
   html.day #dMeta, html.day #pLabel, html.day #tMsg { color:#aebdd4; }
   html.day #dDesc { color:#dde6f2; }
@@ -277,10 +257,10 @@
   html.day #plate-detail .dbtn:not(.nfx):not(.dnp):not(.amp), html.day #plate-pick .dbtn { background:rgba(255,255,255,.10); color:#f2f4f8; }
   html.day #plate-detail .dbtn.focused, html.day #plate-pick .dbtn.focused { box-shadow:0 0 0 3px #06080d, 0 0 0 8px #fff; }
   html.day #status { color:#a9bcd8; }
-  html.day .gnet.ant, html.day .chip b, html.day #qbox .q, html.day .ddcheck, html.day .sck { color:#8f6b00; }
-  html.day .dbtn.loadmore { color:#8f6b00; border-color:rgba(143,107,0,.6); background:rgba(255,211,77,.14); }
-  html.day .dbtn.loadmore.focused { background:rgba(20,22,26,.15); }
-  html.day .rankno { color:rgba(8,12,22,.88); -webkit-text-stroke:3px #dfe8fa; }
+  html.day .gnet.ant, html.day .chip b, html.day #qbox .q, html.day .ddcheck, html.day .sck { color:#9a6b00; }
+  html.day .dbtn.loadmore { color:#9a6b00; border-color:rgba(154,107,0,.6); background:rgba(255,211,77,.14); }
+  html.day .dbtn.loadmore.focused { background:rgba(36,28,18,.15); }
+  html.day .rankno { color:rgba(8,12,22,.88); -webkit-text-stroke:3px #f3ede1; }
   html.day .gcard.rz { color:#f2f4f8; }
 </style>
 </head>
@@ -743,49 +723,13 @@ function applyFilterChange() {
   if (screen === "movies" || screen === "series") loadSection(screen);
   else if (screen === "search") runSearch();
 }
-/* ----- home: hero + curated rows ----- */
-var heroNode = null;
-function heroHtml(node) {
-  var c = node.content || {};
-  var svcs = servicesOf(node);
-  var img = posterUrl(node, "s592");
-  var meta = [];
-  if (c.originalReleaseYear) meta.push(c.originalReleaseYear);
-  meta.push(node.objectType === "SHOW" ? "Series" : "Movie");
-  var gs = genreNames(node, 3);
-  if (gs.length) meta.push(gs.join(", "));
-  if (c.runtime) meta.push(c.runtime + " min");
-  var score = c.scoring && c.scoring.imdbScore ? ' &nbsp;<span class="star">★ ' + Number(c.scoring.imdbScore).toFixed(1) + "</span>" : "";
-  var ws = svcs.filter(function (s) { return s.appId; })[0];
-  var watch = ws ? '<span class="dbtn ' + ws.key + '" data-act="hwatch" data-app="' + esc(ws.appId) + '" data-name="' + esc(ws.name) + '">▶ Watch on ' + esc(ws.name) + "</span>" : "";
-  watch += '<span class="dbtn" data-act="ht">▶ Trailer</span>';
-  return (img ? '<img class="heroBg" src="' + esc(img) + '" alt=""/>' : "") +
-    '<div class="heroShade"></div>' +
-    (img ? '<div class="heroPoster"><img src="' + esc(img) + '" alt=""/></div>' : "") +
-    '<div class="heroContent">' +
-      '<div class="heroTitle">' + esc(c.title || "") + "</div>" +
-      '<div class="heroMeta">' + meta.map(function (m) { return '<span class="mi">' + esc(m) + "</span>"; }).join("") + score + "</div>" +
-      '<div class="heroDesc">' + esc(c.shortDescription || "") + "</div>" +
-      '<div class="heroBtns">' + watch +
-        '<span class="dbtn" data-act="hdetails">Details</span>' +
-        '<span class="dbtn" data-act="hmaybe">' + (inMaybe(node.id) ? "✓ In Maybe" : "＋ Maybe") + "</span>" +
-      "</div>" +
-    "</div>";
-}
-function setHero(node) {
-  if (!node) return;
-  heroNode = node;
-  registerNodes([node]);
-  var blk = $("heroBlk");
-  if (blk) blk.innerHTML = heroHtml(node);
-  enrichHero(node);
-}
+/* ----- home: curated rows ----- */
 function recentRowHtml() {
   return '<div class="rowlabel">Recently Viewed</div>' + stripHtml(recents);
 }
 function renderHomePlaceholders() {
   var skel = '<div class="strip"><div class="stripInner">' + '<span class="skel"></span>'.repeat(7) + "</div></div>";
-  var html = '<div class="heroblk" id="heroBlk"><div class="skelhero"></div></div>';
+  var html = "";
   if (recents.length) html += '<div class="rowblk" id="recentBlk">' + recentRowHtml() + "</div>";
   html += ROW_DEFS.map(function (r) {
     return '<div class="rowblk"><div class="rowlabel">' + esc(r.label) + "</div>" + skel + "</div>";
@@ -826,7 +770,6 @@ function renderRowInto(blk, def, nodes) {
   if (!blk) return;
   blk.innerHTML = '<div class="rowlabel">' + esc(def.label) + (def.sub ? ' <span class="dim">' + esc(def.sub) + "</span>" : "") + "</div>" + (nodes.length ? stripHtml(nodes) : '<div class="empty">Nothing here.</div>');
 }
-function heroPick(nodes) { return nodes.filter(function (n) { return !isSeenNode(n); })[0] || nodes[0]; }
 /* ----- Top 25: TMDB Trending (global buzz) blended with Trakt Trending
    (what people are watching now), resolved through JustWatch and kept only
    when the title streams on his services. Cached 12h like the other rows. ----- */
@@ -927,7 +870,7 @@ function computeSectionTop(key) { var mode = key === "movies" ? "movie" : "tv"; 
 var HOME_TTL = 12 * 3600 * 1000;
 function loadBrowse() {
   renderHomePlaceholders();
-  var offset = 1 + (recents.length ? 1 : 0);
+  var offset = recents.length ? 1 : 0;
   var cache = lsGet("sg_homerows_v2", null);
   var usedCache = false;
   if (cache && cache.rows && (Date.now() - cache.t) < HOME_TTL) {
@@ -946,8 +889,6 @@ function loadBrowse() {
         usedCache = true;
         registerNodes(nodes);
         renderRowInto($("rowsWrap").children[ri + offset], def, nodes);
-        if (ri === 3 && !heroNode) setHero(heroPick(nodes));
-        if (ri === 4 && !heroNode) setHero(heroPick(nodes));
       }
     });
     if (usedCache) {
@@ -974,8 +915,6 @@ function loadBrowse() {
       registerNodes(nodes);
       freshCache.rows[ri] = nodes;
       lsSet("sg_homerows_v2", freshCache);
-      if (ri === 3 && nodes.length && (!heroNode || !anyKey)) setHero(heroPick(nodes));
-      if (ri === 4 && nodes.length && !heroNode) setHero(heroPick(nodes));
       renderRowInto($("rowsWrap").children[ri + offset], def, nodes);
       done++;
       if (done === ROW_DEFS.length) { $("status").textContent = ""; scheduleRebuild(); }
@@ -997,8 +936,8 @@ function updateRecentRow() {
     var div = document.createElement("div");
     div.className = "rowblk"; div.id = "recentBlk";
     div.innerHTML = recentRowHtml();
-    var hero = $("heroBlk");
-    hero.parentNode.insertBefore(div, hero.nextSibling);
+    var wrap = $("rowsWrap");
+    wrap.insertBefore(div, wrap.firstChild);
   }
 }
 /* ----- sections: Movies / Series ----- */
@@ -1176,8 +1115,6 @@ function collectBands() {
   var tabs = Array.prototype.slice.call(document.querySelectorAll("#tabs .tab"));
   if (tabs.length && screen !== "detail" && screen !== "pick") out.push({ els: tabs, kind: "tabs" });
   if (screen === "home") {
-    var hb = Array.prototype.slice.call(document.querySelectorAll("#heroBlk .dbtn"));
-    if (hb.length) out.push({ els: hb, kind: "hero", rowBlk: $("heroBlk"), wrapEl: $("rowsWrap"), rowTop: 0, rowH: 472 });
     Array.prototype.forEach.call($("rowsWrap").querySelectorAll(".rowblk"), function (blk) {
       var b = stripBand(blk, $("rowsWrap"), 72, 1920);
       if (b) out.push(b);
@@ -1379,7 +1316,7 @@ function switchView(v) {
   VIEWS.forEach(function (x) { $("view-" + x).classList.toggle("on", x === v); });
   renderTabs();
   if (v === "maybe") renderMaybe();
-  if (v === "home" && browseDirty) { browseDirty = false; heroNode = null; loadBrowse(); }
+  if (v === "home" && browseDirty) { browseDirty = false; loadBrowse(); }
   if (v === "settings") { renderSettings(); renderTrakt(); }
   if ((v === "movies" || v === "series") && !SEC[v].loaded) loadSection(v);
   if (sportsTimer) { clearInterval(sportsTimer); sportsTimer = null; }
@@ -1389,7 +1326,7 @@ function switchView(v) {
   bandMem = {};
   applyFocus();
 }
-/* ================= TMDB enrichment (detail + hero) ================= */
+/* ================= TMDB enrichment (detail) ================= */
 var curTrailer = null;
 /* ================= Trakt =================
    PKCE public client (no secret): device-code connect, tokens in localStorage.
@@ -1810,19 +1747,6 @@ function enrichDetail(node) {
     if (tks.length) { curTrailer = { key: tks[0], keys: tks }; renderDetailBtns(); }
   });
 }
-function enrichHero(node) {
-  if (!TMDB_ON || !node) return;
-  tmdbDetail(node).then(function (d) {
-    if (!d || !d.backdrop_path || heroNode !== node) return;
-    var url = tmdbImg(d.backdrop_path, "w1280");
-    var pre = new Image();
-    pre.onload = function () {
-      var bg = document.querySelector("#heroBlk .heroBg");
-      if (bg && heroNode === node) bg.src = url;
-    };
-    pre.src = url;
-  });
-}
 function launchTrailerKey(key) {
   if (currentNode) saveReturn(currentNode);
   var url = "https://www.youtube.com/watch?v=" + key;
@@ -1967,16 +1891,6 @@ function findTrailerKeys(d) {
   return out.slice(0, 4);
 }
 function findTrailerKey(d) { var ks = findTrailerKeys(d); return ks.length ? ks[0] : null; }
-function launchTrailerFor(node) {
-  if (!node) return;
-  if (!TMDB_ON) { $("status").textContent = "Trailers arrive with the TMDB upgrade."; return; }
-  $("status").textContent = "Finding the trailer…";
-  tmdbDetail(node).then(function (d) {
-    var keys = findTrailerKeys(d);
-    if (keys.length) openTrailer(keys);
-    else $("status").textContent = "No trailer or teaser on TMDB for this one.";
-  }).catch(function () { $("status").textContent = "Trailer lookup failed."; });
-}
 function openDetail(node) {
   if (!node) return;
   currentNode = node;
@@ -2148,10 +2062,7 @@ function activate(el) {
   var act = el.getAttribute("data-act");
   if (act === "game") { gameWatch(el); }
   else if (act === "redzone") { launchApp("UdGpKNSRmw.NFL", "NFL"); }
-  else if (act === "launch" || act === "hwatch") { try { saveReturn(currentNode || heroNode); } catch (e) {} launchApp(el.getAttribute("data-app"), el.getAttribute("data-name")); }
-  else if (act === "hdetails") openDetail(heroNode);
-  else if (act === "ht") launchTrailerFor(heroNode);
-  else if (act === "hmaybe") { if (heroNode) { toggleMaybe(heroNode); setHero(heroNode); rebuildBands(true); } }
+  else if (act === "launch") { try { saveReturn(currentNode); } catch (e) {} launchApp(el.getAttribute("data-app"), el.getAttribute("data-name")); }
   else if (act === "maybe") { toggleMaybe(currentNode); openDetail(currentNode); }
   else if (act === "seen") { toggleSeen(currentNode); openDetail(currentNode); }
   else if (act === "trailer") launchTrailer();
@@ -2246,7 +2157,6 @@ function toggleService(id) {
   ["sg_homerows_v2", "sg_top25_v2", "sg_top30_movie_v1", "sg_top30_tv_v1"].forEach(function (k) { try { localStorage.removeItem(k); } catch (e) {} });
   SEC_CACHE = {}; SEARCH_CACHE = {};
   ["movies", "series"].forEach(function (k) { SEC[k].loaded = false; SEC[k].top = null; SEC[k].topState = null; SEC[k].shown = null; });
-  heroNode = null;
   browseDirty = true;
   refreshSvcFilterDef();
   renderFilterBars();
@@ -2405,7 +2315,7 @@ function gameCard(g) {
   var attrs = ' data-act="game" data-kind="' + a.kind + '"' +
     (a.kind === "tune" ? ' data-ch="' + a.ch + '"' : "") +
     (a.kind === "app" ? ' data-app="' + a.appId + '" data-name="' + esc(a.name) + '"' : "");
-  return '<div class="gcard' + (a.kind === "none" ? " dim" : "") + '"' + attrs + ">" +
+  return '<div class="gcard' + ((a.kind === "none" || g.state === "post") ? " dim" : "") + '"' + attrs + ">" +
     '<span class="gedge"><i style="background:#' + esc(g.away.color || "44506b") + '"></i><i style="background:#' + esc(g.home.color || "44506b") + '"></i></span>' +
     '<div class="gc-top"><span class="gleague">' + g.league.name + '</span><span class="gnet ' + a.cls + '">' + esc(a.chip) + "</span></div>" +
     '<div class="gteams">' + teamRow(g.away, g.home, g.state) + teamRow(g.home, g.away, g.state) + "</div>" +
