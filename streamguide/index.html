@@ -1128,7 +1128,7 @@ function collectBands() {
   } else if (screen === "sports") {
     Array.prototype.forEach.call($("sportsWrap").querySelectorAll(".rowblk"), function (blk) {
       var cards = Array.prototype.slice.call(blk.querySelectorAll(".gcard"));
-      if (cards.length) out.push({ els: cards, kind: "strip", stripInner: blk.querySelector(".stripInner"), rowBlk: blk, wrapEl: $("sportsWrap"), padL: 72, viewW: 1920, tx: 0, rowTop: blk.offsetTop, rowH: blk.offsetHeight });
+      if (cards.length) out.push({ els: cards, kind: "strip", stripInner: blk.querySelector(".stripInner"), rowBlk: blk, wrapEl: $("sportsWrap"), padL: 72, viewW: 1920, cardW: 593, cardWid: 565, tx: 0, rowTop: blk.offsetTop, rowH: blk.offsetHeight });
     });
   } else if (screen === "detail") {
     out.push({ els: Array.prototype.slice.call($("dBtns").querySelectorAll(".dbtn")), kind: "btns" });
