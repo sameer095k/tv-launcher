@@ -2195,6 +2195,8 @@ function renderSports(results) {
     byLeague[r.league.key] = games;
     games.forEach(function (g) { if (g.state === "in") live.push(g); });
   });
+  var actRank = function (g) { var a = gameAction(g); return a.kind === "tune" ? 0 : a.kind === "app" ? 1 : 2; };
+  live = live.map(function (g, i) { return [actRank(g), i, g]; }).sort(function (a, b) { return a[0] - b[0] || a[1] - b[1]; }).map(function (p) { return p[2]; });
   var h = "";
   if (live.length) h += '<div class="rowblk"><div class="rowlabel"><span style="color:#ff4d4d">●</span> Live Now </div><div class="strip"><div class="stripInner">' + live.map(gameCard).join("") + "</div></div></div>";
   var now = new Date();
