@@ -40,7 +40,7 @@
   .tab { display:inline-block; padding:12px 30px; margin-right:16px; border-radius:32px;
          background:var(--w07); color:var(--ink-4); font-size:26px; }
   .tab.on { background:var(--ink-6); color:var(--bg); font-weight:700; }
-  .tab.focused { box-shadow:0 0 0 2px var(--bg), 0 0 0 6px var(--gold); }
+  .tab.focused { box-shadow:0 0 0 2px var(--bg), 0 0 0 6px var(--white); }
   /* ---------- views & scrolling wraps ---------- */
   .view { position:absolute; left:0; top:252px; width:1920px; height:828px; overflow:hidden; display:none; }
   .view.on { display:block; }
@@ -79,7 +79,7 @@
   .eplabel { position:absolute; left:0; right:0; bottom:0; z-index:3; padding:30px 10px 8px; background:linear-gradient(var(--clear), var(--k88)); color:var(--white); font-size:19px; font-weight:600; line-height:1.3; }
   .eplabel .et { display:block; font-weight:400; font-size:17px; color:var(--ink-9); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .eplabel .prem { color:var(--gold); }
-  .card.focused .poster { box-shadow:0 0 0 3px var(--bg), 0 0 0 7px var(--gold); z-index:3; }
+  .card.focused .poster { box-shadow:0 0 0 3px var(--bg), 0 0 0 7px var(--white); z-index:3; }
   .score { position:absolute; right:8px; top:8px; background:var(--shade-82); color:var(--gold);
            font-size:20px; padding:3px 9px; border-radius:9px; }
   .badges { position:absolute; left:8px; bottom:8px; }
@@ -108,7 +108,7 @@
   .chip { display:inline-block; padding:11px 22px; margin-right:14px; border-radius:28px;
           background:var(--w07); color:var(--ink-4); font-size:23px; }
   .chip b { color:var(--gold); font-weight:700; }
-  .chip.focused { box-shadow:0 0 0 2px var(--bg), 0 0 0 6px var(--gold); background:var(--w15); }
+  .chip.focused { box-shadow:0 0 0 2px var(--bg), 0 0 0 6px var(--white); background:var(--w15); }
   .chip.reset b { color:var(--accent-warm); }
   /* ---------- dropdown ---------- */
   #ddmenu { position:absolute; min-width:308px; background:var(--panel-3); border:2px solid var(--w20);
@@ -116,7 +116,7 @@
   #ddmenu.on { display:block; }
   .dditem { padding:12px 18px; font-size:25px; border-radius:9px; color:var(--ink-4); white-space:nowrap; }
   .dditem .ddcheck { float:right; color:var(--gold); margin-left:26px; }
-  .dditem.focused { background:var(--gold-20); color:var(--white); font-weight:700; }
+  .dditem.focused { background:var(--w15); color:var(--white); font-weight:700; }
   .dditem.focused .ddcheck { color:var(--gold); }
   /* ---------- search (two-column) ---------- */
   #sLeft { position:absolute; left:72px; top:6px; width:630px; }
@@ -126,7 +126,7 @@
   .key { display:inline-block; width:52px; height:56px; line-height:56px; text-align:center; margin:0 8px 10px 0;
          border-radius:11px; background:var(--w08); font-size:22px; }
   .key.wide { width:112px; font-size:20px; }
-  .key.focused { box-shadow:0 0 0 2px var(--bg), 0 0 0 6px var(--gold); background:var(--w16); }
+  .key.focused { box-shadow:0 0 0 2px var(--bg), 0 0 0 6px var(--white); background:var(--w16); }
   #sRightBar { position:absolute; left:760px; top:0; width:1160px; height:76px; }
   #sresultsWrap { left:760px; top:84px; width:1160px; }
   #sresultsWrap .rowlabel { margin-left:2px; }
@@ -135,7 +135,7 @@
   /* ---------- buttons ---------- */
   .dbtn.loadmore { border:2px solid var(--gold-65); color:var(--gold); background:var(--gold-08);
                    font-weight:700; padding:20px 46px; font-size:25px; }
-  .dbtn.loadmore.focused { background:var(--gold-25); }
+  .dbtn.loadmore.focused { background:var(--w15); }
   /* sports */
   #view-sports .strip { height:310px; }
   #view-sports .stripInner { height:310px; }
@@ -143,7 +143,7 @@
            background:var(--card); border:1px solid var(--line); padding:24px 28px 18px 36px; position:relative; overflow:hidden; }
   .gedge { position:absolute; left:0; top:0; bottom:0; width:7px; }
   .gedge i { display:block; height:50%; }
-  .gcard.focused { box-shadow:0 0 0 3px var(--bg), 0 0 0 7px var(--gold); }
+  .gcard.focused { box-shadow:0 0 0 3px var(--bg), 0 0 0 7px var(--white); }
   .gcard.dim { opacity:.52; }
   .gcard.rz { background:var(--rz-bg); border-color:var(--rz-line); }
   .gc-top { display:flex; justify-content:space-between; align-items:center; }
@@ -173,7 +173,7 @@
   .dbtn { display:inline-block; padding:18px 34px; margin-right:18px; border-radius:14px;
           background:var(--w10); font-size:27px; color:var(--text); }
   .dbtn.nfx { background:var(--nfx); } .dbtn.dnp { background:var(--dnp); } .dbtn.amp { background:var(--amp); }
-  .dbtn.focused { box-shadow:0 0 0 3px var(--bg), 0 0 0 8px var(--gold); }
+  .dbtn.focused { box-shadow:0 0 0 3px var(--bg), 0 0 0 8px var(--white); }
   /* ---------- overlays ---------- */
   .plate { position:absolute; left:0; top:0; width:1920px; height:1080px; z-index:40; display:none;
            background:var(--scrim-96); }
@@ -223,7 +223,7 @@
   .castItem .cc { font-size:16px; color:var(--dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100px; }
   .rchip { display:inline-block; padding:13px 24px; margin:0 12px 12px 0; border-radius:26px;
            background:var(--w08); font-size:23px; color:var(--ink-4); }
-  .rchip.focused { box-shadow:0 0 0 2px var(--bg), 0 0 0 6px var(--gold); }
+  .rchip.focused { box-shadow:0 0 0 2px var(--bg), 0 0 0 6px var(--white); }
   /* ---------- trailer player ---------- */
   #plate-trailer { z-index:60; }
   #tFrameWrap { position:absolute; left:160px; top:64px; width:1600px; height:900px; background:var(--black);
