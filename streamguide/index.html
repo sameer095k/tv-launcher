@@ -2446,8 +2446,15 @@ function teamRow(t, o, state) {
   var lose = (state === "in" || state === "post") && t.score !== "" && o.score !== "" && Number(t.score) < Number(o.score);
   var right = (state === "in" || state === "post") ? '<span class="gscore">' + esc(t.score) + "</span>"
     : (t.record ? '<span class="grec">' + esc(t.record) + "</span>" : "");
+  /* Badge: logo only. The abbreviation is the no-logo fallback — it used
+     to render underneath the img, and ESPN's transparent logos let the
+     bold letters ghost through (v3.2.1). If the logo fails to load,
+     onerror swaps the letters back in. */
+  var badge = t.logo
+    ? '<img src="' + esc(t.logo) + '" alt="" data-a="' + esc(t.abbr) + '" onerror="var p=this.parentNode,a=this.getAttribute(\'data-a\');this.remove();p.textContent=a;"/>'
+    : esc(t.abbr);
   return '<div class="gtrow' + (win ? " win" : "") + (lose ? " lose" : "") + '"><span class="glogo">' +
-    (t.logo ? '<img src="' + esc(t.logo) + '" alt=""/>' : "") + esc(t.abbr) + '</span>' +
+    badge + '</span>' +
     '<span class="gname">' + esc(t.name) + "</span>" + right + "</div>";
 }
 function gameCard(g) {
