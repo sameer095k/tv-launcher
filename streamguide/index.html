@@ -2285,17 +2285,23 @@ var SPORT_APPS = [
   { re: /^nfl/i, appId: "UdGpKNSRmw.NFL", name: "NFL", svc: "nfl" },
   { re: /disney/i, appId: "MCmYXNxgcu.DisneyPlus", name: "Disney+", svc: "disney" }
 ];
-/* ---- TitanTV local-coverage check (v3.2.0): a FOX/CBS game only earns
-   the gold antenna treatment when his own affiliate (KCBS 2 / KTTV 11,
-   ZIP 91765) is actually carrying it. TitanTV's keyless API answers
-   "what is on channel X at kickoff" — episodeTitle is
-   "Away at Home from Stadium", matching ESPN's displayName. IDs are
-   minted once (guest user -> provider 803 -> lineup -> channel map)
-   and persisted; verdicts are cached ~20h per date+network+kickoff.
-   Any failure leaves the verdict unknown and Sports behaves exactly
-   as it did before this feature. Verified end-to-end on this TV
-   2026-10-26 (throwaway TitanTest1: all 5 chain steps PASS). ---- */
-var TTV_KEY = "sg_ttv_v1", TTV_CACHE_KEY = "sg_ttv_cache_v1", TTV_TTL = 20 * 3600 * 1000;
+/* ---- TitanTV local-coverage check (v3.2.0; NBA added v3.3.0): a game
+   on a regional-split network only earns the gold antenna treatment
+   when his own affiliate is actually carrying it — NFL on FOX/CBS
+   (KCBS 2 / KTTV 11) and NBA on NBC (KNBC 4; NBC's Coast 2 Coast
+   windows are regional, the other game is Peacock-only here), ZIP
+   91765. TitanTV's keyless API answers "what is on channel X at
+   tip-off" — episodeTitle is "Away at Home from Stadium", matching
+   ESPN's team names. IDs are minted once (guest user -> provider
+   803 -> lineup -> channel map) and persisted (sg_ttv_v2: the map
+   gained the NBC affiliate); verdicts are cached ~20h per
+   date+network+start time. Any failure leaves the verdict unknown
+   and Sports behaves exactly as it did before this feature.
+   Verified end-to-end on this TV 2026-10-26 (throwaway TitanTest1:
+   all 5 chain steps PASS); the NBA extension was verified against
+   real TitanTV data for the 2026-10-27 Coast 2 Coast slate
+   (Knicks = KNBC news, not local; Lakers = KNBC game, local). ---- */
+var TTV_KEY = "sg_ttv_v2", TTV_CACHE_KEY = "sg_ttv_cache_v1", TTV_TTL = 20 * 3600 * 1000;
 var ttvIds = null, ttvIdsBusy = false, ttvPending = {}, lastByLeague = null;
 var ttvVerdicts = {};
 try { ttvVerdicts = JSON.parse(localStorage.getItem(TTV_CACHE_KEY) || "{}") || {}; } catch (e) { ttvVerdicts = {}; }
@@ -2309,11 +2315,14 @@ function ttvFetch(path, opts) {
   });
 }
 function ttvGameNet(g) {
-  for (var i = 0; i < g.nets.length; i++) { var n = g.nets[i].toUpperCase(); if (n === "CBS" || n === "FOX") return n; }
+  if (!g.league) return "";
+  var want = g.league.key === "nfl" ? ["CBS", "FOX"] : g.league.key === "nba" ? ["NBC"] : null;
+  if (!want) return "";
+  for (var i = 0; i < g.nets.length; i++) { var n = g.nets[i].toUpperCase(); if (want.indexOf(n) >= 0) return n; }
   return "";
 }
 function ttvVerdict(g) {
-  if (!g.league || g.league.key !== "nfl" || g.state === "post") return null;
+  if (!g.league || g.state === "post") return null;
   var net = ttvGameNet(g); if (!net) return null;
   var v = ttvVerdicts[ttvKeyFor(g, net)];
   if (!v || (Date.now() - v.at) > TTV_TTL) return null;
@@ -2323,7 +2332,7 @@ function ttvBootstrap() {
   if (ttvIds || ttvIdsBusy) { if (ttvIds) ttvKickChecks(); return; }
   var saved = null;
   try { saved = JSON.parse(localStorage.getItem(TTV_KEY) || "null"); } catch (e) {}
-  if (saved && saved.u && saved.l && saved.cbs && saved.fox) { ttvIds = saved; ttvKickChecks(); return; }
+  if (saved && saved.u && saved.l && saved.cbs && saved.fox && saved.nbc) { ttvIds = saved; ttvKickChecks(); return; }
   ttvIdsBusy = true;
   ttvFetch("/user/guest").then(function (gu) {
     var u = gu.userId;
@@ -2334,14 +2343,15 @@ function ttvBootstrap() {
         body: JSON.stringify({ lineupName: "Broadcast - Los Angeles CA", utcOffset: -480, observesDST: true, providerId: 803, deviceTypeCode: "B" }) })
       .then(function (ln) {
         return ttvFetch("/channel/" + u + "/" + ln.lineupId).then(function (cm) {
-          var cbs = 0, fox = 0;
+          var cbs = 0, fox = 0, nbc = 0;
           (cm.channels || []).forEach(function (c) {
             var nm = c.callSign || "";
             if (nm === "KCBS-DT") cbs = c.channelIndex;
             if (nm === "KTTV-DT") fox = c.channelIndex;
+            if (nm === "KNBC-DT") nbc = c.channelIndex;
           });
-          if (!cbs || !fox) throw new Error("affiliate channels missing");
-          ttvIds = { u: u, l: ln.lineupId, cbs: cbs, fox: fox };
+          if (!cbs || !fox || !nbc) throw new Error("affiliate channels missing");
+          ttvIds = { u: u, l: ln.lineupId, cbs: cbs, fox: fox, nbc: nbc };
           try { localStorage.setItem(TTV_KEY, JSON.stringify(ttvIds)); } catch (e) {}
         });
       });
@@ -2382,7 +2392,7 @@ function ttvJudge(g, s) {
   }
   var ep = ev.episodeTitle || "";
   var gameStr = ep.split(" from ")[0];
-  if ((ev.title || "") === "NFL Football" || / at /.test(gameStr)) {
+  if ((ev.title || "") === "NFL Football" || (ev.title || "") === "NBA Basketball" || / at /.test(gameStr)) {
     var want = g.away.name + " at " + g.home.name;
     return { local: ttvNorm(gameStr) === ttvNorm(want), lt: gameStr };
   }
@@ -2390,13 +2400,13 @@ function ttvJudge(g, s) {
 }
 function ttvKickChecks() {
   if (!ttvIds || !lastByLeague) return;
-  (lastByLeague["nfl"] || []).forEach(function (g) {
+  ["nfl", "nba"].forEach(function (lk) { (lastByLeague[lk] || []).forEach(function (g) {
     if (!svcSel("antenna") || g.state === "post" || !ttvGameNet(g)) return;
     if (ttvVerdict(g)) return;
     var net = ttvGameNet(g), key = ttvKeyFor(g, net);
     if (ttvPending[key]) return;
     ttvPending[key] = true;
-    var idx = net === "CBS" ? ttvIds.cbs : ttvIds.fox;
+    var idx = net === "CBS" ? ttvIds.cbs : net === "FOX" ? ttvIds.fox : ttvIds.nbc;
     ttvFetch("/schedule/" + ttvIds.u + "/" + ttvIds.l + "/" + ttvStamp(new Date(g.date)) + "/4/7?channelIndex=" + idx + "&channelCount=1")
       .then(function (s) {
         var v = ttvJudge(g, s);
@@ -2408,7 +2418,7 @@ function ttvKickChecks() {
       })
       .catch(function () {})
       .then(function () { delete ttvPending[key]; });
-  });
+  }); });
 }
 function appAction(g) {
   var i, j, net;
@@ -2424,12 +2434,16 @@ function gameAction(g) {
     for (i = 0; i < g.nets.length; i++) { net = g.nets[i];
       for (j = 0; j < ANT_NETS.length; j++) if (net.toUpperCase() === ANT_NETS[j].n) {
         var an = ANT_NETS[j];
-        if ((an.n === "CBS" || an.n === "FOX") && g.league && g.league.key === "nfl" && g.state !== "post") {
+        var ttvChecked = g.league && g.state !== "post" &&
+          ((g.league.key === "nfl" && (an.n === "CBS" || an.n === "FOX")) ||
+           (g.league.key === "nba" && an.n === "NBC"));
+        if (ttvChecked) {
           var v = ttvVerdict(g);
           if (v && !v.local) {
             var app = appAction(g);
             if (app) return app;
-            return { kind: "notlocal", chip: an.n + " " + an.ch, cls: "notlocal", net: an.n, lt: v.lt || "", act: "not on your local " + an.n };
+            return { kind: "notlocal", chip: an.n + " " + an.ch, cls: "notlocal", net: an.n, lt: v.lt || "",
+                     via: g.league.key === "nba" ? "Peacock" : "", act: "not on your local " + an.n };
           }
         }
         return { kind: "tune", ch: an.ch, chip: an.n + " " + an.ch, cls: "ant", act: "OK → tune to " + an.n };
@@ -2464,7 +2478,7 @@ function gameCard(g) {
   var attrs = ' data-act="game" data-kind="' + a.kind + '"' +
     (a.kind === "tune" ? ' data-ch="' + a.ch + '"' : "") +
     (a.kind === "app" ? ' data-app="' + a.appId + '" data-name="' + esc(a.name) + '"' : "") +
-    (a.kind === "notlocal" ? ' data-net="' + a.net + '" data-lt="' + esc(a.lt || "") + '"' : "");
+    (a.kind === "notlocal" ? ' data-net="' + a.net + '" data-lt="' + esc(a.lt || "") + '"' + (a.via ? ' data-via="' + a.via + '"' : "") : "");
   return '<div class="gcard' + ((a.kind === "none" || g.state === "post") ? " dim" : "") + '"' + attrs + ">" +
     '<span class="gedge"><i style="background:#' + esc(g.away.color || "44506b") + '"></i><i style="background:#' + esc(g.home.color || "44506b") + '"></i></span>' +
     '<div class="gc-top"><span class="gleague">' + g.league.name + '</span><span class="gnet ' + a.cls + '">' + esc(a.chip) + "</span></div>" +
@@ -2528,10 +2542,11 @@ function gameWatch(el) {
   if (kind === "tune") tuneToChannel(parseInt(el.getAttribute("data-ch"), 10));
   else if (kind === "app") launchApp(el.getAttribute("data-app"), el.getAttribute("data-name"));
   else if (kind === "notlocal") {
-    var lt = el.getAttribute("data-lt");
-    $("status").textContent = lt
+    var lt = el.getAttribute("data-lt"), via = el.getAttribute("data-via");
+    $("status").textContent = (lt
       ? "Not on your local " + el.getAttribute("data-net") + " — it's showing " + lt + "."
-      : "Not on your local " + el.getAttribute("data-net") + " in this market.";
+      : "Not on your local " + el.getAttribute("data-net") + " in this market.") +
+      (via ? " This one's on " + via + "." : "");
   }
   else $("status").textContent = "That game is on a service you don't have.";
 }
