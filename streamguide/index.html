@@ -2368,8 +2368,8 @@ function ttvGameNet(g) {
   for (var i = 0; i < g.nets.length; i++) { var n = g.nets[i].toUpperCase(); if (want.indexOf(n) >= 0) return n; }
   return "";
 }
-function ttvVerdict(g) {
-  if (!g.league || g.state === "post") return null;
+function ttvVerdict(g, allowPost) {
+  if (!g.league || (g.state === "post" && !allowPost)) return null;
   var net = ttvGameNet(g); if (!net) return null;
   var v = ttvVerdicts[ttvKeyFor(g, net)];
   if (!v || (Date.now() - v.at) > TTV_TTL) return null;
@@ -2508,11 +2508,17 @@ function gameAction(g) {
     for (i = 0; i < g.nets.length; i++) { net = g.nets[i];
       for (j = 0; j < ANT_NETS.length; j++) if (net.toUpperCase() === ANT_NETS[j].n) {
         var an = ANT_NETS[j];
-        var ttvChecked = g.league && g.state !== "post" &&
+        /* Finals consult the verdict too (v3.6.5): the verdict was
+           earned while the game was live and stays cached ~20h, but
+           the old code stopped asking at the final whistle — so every
+           finished game on a national network wore the gold border,
+           including games his affiliates never carried. A final with
+           no recorded verdict keeps the benefit of the doubt. */
+        var ttvChecked = g.league &&
           ((g.league.key === "nfl" && (an.n === "CBS" || an.n === "FOX")) ||
            (g.league.key === "nba" && an.n === "NBC"));
         if (ttvChecked) {
-          var v = ttvVerdict(g);
+          var v = ttvVerdict(g, true);
           if (v && !v.local) {
             var app = appAction(g);
             if (app) return app;
@@ -2601,14 +2607,6 @@ function winBucket(g) {
   if (h < 17) return { key: "aft", label: "Afternoon" };
   return { key: "tonight", label: "Tonight" };
 }
-function winLabel(b, games) {
-  if (!b.nfl) return b.label;
-  if (games.length === 1) {
-    var d = new Date(games[0].date), h = d.getHours(), m = d.getMinutes();
-    return (h % 12 || 12) + ":" + (m < 10 ? "0" : "") + m + " " + (h >= 12 ? "PM" : "AM");
-  }
-  return (b.hour % 12 || 12) + ":00 " + (b.hour >= 12 ? "PM" : "AM");
-}
 function renderSports(byLeague) {
   var h = "";
   var bandCount = 0;
@@ -2647,12 +2645,13 @@ function renderSports(byLeague) {
          Morning/Afternoon/Tonight words (his call 2026-11-01) — the
          bands stay separate rows, just unlabeled. First band of a
          league still carries the league name. */
-      /* Only a league's first band is labeled (his calls 2026-11-01:
-         no day/night words, no 1 PM / 5 PM headers — the rows keep
-         their separation, the words go). The NFL window rides as a
-         quiet dim span, not a middle-dot meta string. */
+      /* Only a league's first band is labeled, with the league name
+         alone (his calls 2026-11-01: no day/night words, no 1 PM /
+         5 PM headers — and the 10:00 AM header "makes no sense" over
+         a band of live and finished games at 1 PM; every tile already
+         carries its own time or clock). */
       var label = "";
-      if (wi === 0) label = l.name + (w.b.nfl ? ' <span class="dim">' + winLabel(w.b, games) + "</span>" : "");
+      if (wi === 0) label = l.name;
       for (var ci = 0; ci * 6 < tiles.length; ci++) {
         bandCount++;
         h += '<div class="rowblk">' + (ci === 0 && label ? '<div class="rowlabel">' + label + "</div>" : "") +
