@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=1920, height=1080"/>
@@ -12,7 +12,8 @@
     --ink-10:#dfe7f3; --ink-11:#a7b8d0; --ink-12:#e8eefb; --ink-13:#cfd8dc; --ink-14:#c6d2e6; --ink-15:#dde6f2;
     --ink-16:#a9bcd8; --ink-17:#e6edf7; --ink-50:rgba(238,243,252,.5); --dim:#8fa2bd; --dim-2:#7787a3; --dim-3:#5f7292;
     --gold:#ffd34d; --gold-08:rgba(255,211,77,.08); --gold-20:rgba(255,211,77,.20); --gold-25:rgba(255,211,77,.25); --gold-65:rgba(255,211,77,.65);
-    --live:#ff6b6b; --card:#101827; --panel:#1a2233; --panel-2:#10151f; --panel-3:#151c2b;
+    --live:#ff6b6b; --card:#101827; --card-dim:#0a0f18; --panel:#1a2233; --panel-2:#10151f; --panel-3:#151c2b;
+    --bdg-pct:#00b2d6; --bdg-hbm:#5822b4; --bdg-hlu:#1ce783; --bdg-hlu-ink:#0b0e14; --bdg-atp:#555; --bdg-pmp:#0064ff;
     --line:rgba(255,255,255,.09); --w07:rgba(255,255,255,.07); --w08:rgba(255,255,255,.08); --w10:rgba(255,255,255,.10);
     --w15:rgba(255,255,255,.15); --w16:rgba(255,255,255,.16); --w20:rgba(255,255,255,.20);
     --scrim-93:rgba(6,8,13,.93); --scrim-45:rgba(6,8,13,.45); --scrim-18:rgba(6,8,13,.18); --scrim-88:rgba(6,8,13,.88); --scrim-96:rgba(6,8,13,.96);
@@ -71,7 +72,7 @@
   .bdg { display:inline-block; min-width:34px; text-align:center; padding:3px 7px; margin-right:6px;
          border-radius:8px; font-size:19px; font-weight:700; color:var(--white); }
   .bdg.nfx { background:var(--nfx); } .bdg.dnp { background:var(--dnp); } .bdg.amp { background:var(--amp); }
-  .bdg.pct { background:#00b2d6; } .bdg.hbm { background:#5822b4; } .bdg.hlu { background:#1ce783; color:#0b0e14; } .bdg.atp { background:#555; } .bdg.pmp { background:#0064ff; }
+  .bdg.pct { background:var(--bdg-pct); } .bdg.hbm { background:var(--bdg-hbm); } .bdg.hlu { background:var(--bdg-hlu); color:var(--bdg-hlu-ink); } .bdg.atp { background:var(--bdg-atp); } .bdg.pmp { background:var(--bdg-pmp); }
   .ctitle { margin-top:9px; font-size:21px; color:var(--ink-10); white-space:nowrap; overflow:hidden;
             text-overflow:ellipsis; width:208px; }
   .cyear { font-size:19px; color:var(--ink-11); }
@@ -126,22 +127,38 @@
   #view-sports .strip { height:120px; }
   #view-sports .stripInner { height:120px; padding-top:8px; }
   #view-sports .rowlabel { font-size:22px; margin-bottom:4px; }
+  #view-sports .rowlabel .dim { font-size:20px; }
   #view-sports .rowblk { margin-bottom:8px; }
-  .gcard.wtile { box-sizing:border-box; width:280px; height:104px; margin-right:14px; padding:8px 16px 8px 22px; border-radius:15px; }
+  .gcard.wtile { width:280px; height:104px; margin-right:16px; padding:8px 16px; border-radius:16px; }
   .gcard.wtile.ant { border:2px solid var(--gold); }
+  .gcard.wtile .gedge { display:none; }
+  .gcard.wtile.dim { opacity:1; background:var(--card-dim); color:var(--text); filter:saturate(.45); }
+  .gcard.wtile.focused { box-shadow:inset 0 0 0 3px var(--ring), 0 0 0 3px var(--ring); border-color:var(--ring); }
+  .gcard.wtile.pressed { transform:scale(.96); filter:brightness(1.15); }
   .wtile .gteams { margin-top:0; }
-  .wtile .gtrow { gap:10px; margin-top:2px; }
+  .wtile .gtrow { gap:8px; margin-top:2px; }
   .wtile .glogo { width:26px; height:26px; font-size:11px; }
   .wtile .glogo img { width:22px; height:22px; }
   .wtile .gname { font-size:21px; font-weight:700; }
-  .wtile .gscore { font-size:22px; min-width:0; }
-  .wtile .grec { font-size:16px; }
-  .wtile .gc-bot { left:16px; right:16px; bottom:7px; }
-  .wtile .gstat { font-size:16px; }
-  .wtile .gnet { font-size:13px; font-weight:700; padding:3px 9px; border-radius:999px; border:1.5px solid var(--w10); color:var(--ink-12); }
-  .wtile .gnet.ant { background:var(--gold); color:#16181d; border-color:transparent; }
+  .wtile .gscore { font-size:26px; min-width:0; }
+  .wtile .grec { font-size:17px; }
+  .wtile .gc-bot { left:16px; right:16px; bottom:8px; }
+  .wtile .gstat { font-size:18px; font-weight:700; }
+  .wtile .gnet { font-size:13px; font-weight:700; padding:4px 8px; border-radius:999px; border:1.5px solid var(--w10); color:var(--ink-12); }
+  .wtile .gnet.ant { background:var(--gold); color:var(--badge-ink); border-color:transparent; }
   .wtile .gnet.none, .wtile .gnet.notlocal { color:var(--dim); font-weight:600; }
-  .gcard.rz.wtile .rz-title { font-size:29px; margin-top:6px; }
+  .gcard.rz.wtile .gleague { display:none; }
+  .gcard.rz.wtile .rz-title { font-size:29px; margin-top:8px; }
+  .gcard.rz.wtile .rz-title span { color:inherit; }
+  /* Roomy density: on light days (five bands or fewer) the tiles
+     grow so the screen fills instead of ending at two-thirds. */
+  #sportsWrap.roomy .strip, #sportsWrap.roomy .stripInner { height:148px; }
+  #sportsWrap.roomy .gcard.wtile { height:132px; }
+  #sportsWrap.roomy .wtile .glogo { width:32px; height:32px; }
+  #sportsWrap.roomy .wtile .glogo img { width:28px; height:28px; }
+  #sportsWrap.roomy .wtile .gname { font-size:23px; }
+  #sportsWrap.roomy .wtile .gscore { font-size:29px; }
+  #sportsWrap.roomy .wtile .gstat { font-size:19px; }
   .gcard { display:inline-block; vertical-align:top; width:700px; height:252px; margin-right:28px; border-radius:18px;
            background:var(--card); border:1px solid var(--line); padding:24px 28px 18px 36px; position:relative; overflow:hidden; }
   .gedge { position:absolute; left:0; top:0; bottom:0; width:7px; }
@@ -237,7 +254,7 @@
   #tMsg { position:absolute; left:0; top:984px; width:1920px; text-align:center; font-size:25px; color:var(--ink-3); }
 
   /* ---------- settings ---------- */
-  .setlabel { margin:26px 0 14px 72px; font-size:23px; font-weight:800; letter-spacing:3px; color:var(--dim); }
+  .setlabel { margin:26px 0 14px 72px; font-size:23px; font-weight:800; color:var(--dim); }
   #setSvc .setlabel { margin-top:2px; }
   .setrow { margin:0 0 16px 72px; white-space:nowrap; }
   .svctile { display:inline-flex; align-items:center; position:relative; width:428px; height:76px; margin-right:16px; padding:20px 52px 20px 28px; border-radius:18px;
@@ -257,7 +274,7 @@
   .gleague { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .gnet { flex:none; }
   /* ---------- day theme ---------- */
-  html.day { --bg:#f3ede1; --text:#241c12; --card:#fdfaf3; --panel:#fdfaf3; --panel-2:#f8f3e7; --panel-3:#eee5d0;
+  html.day { --bg:#f3ede1; --text:#241c12; --card:#fdfaf3; --card-dim:#ece3cd; --panel:#fdfaf3; --panel-2:#f8f3e7; --panel-3:#eee5d0;
     --ink:#241c12; --ink-2:#4a3f2c; --ink-3:#77694f; --ink-4:#33291a; --ink-5:#4a3f2c; --ink-6:#241c12; --ink-7:#2b2113;
     --ink-8:#33291a; --ink-9:#4a3f2c; --ink-10:#33291a; --ink-11:#77694f; --ink-12:#2b2113; --ink-13:#5d4f38;
     --ink-14:#4a3f2c; --ink-15:#3a2e1c; --ink-16:#77694f; --ink-17:#2b2113; --ink-50:rgba(36,28,18,.5);
@@ -337,7 +354,7 @@
 
 <div class="plate" id="plate-pick">
   <div id="pWrap">
-    <div id="pLabel">Tonight's pick</div>
+    <div id="pLabel">Tonight’s pick</div>
     <div id="pPoster"></div>
     <div id="pTitle"></div>
     <div id="pMeta"></div>
@@ -1189,7 +1206,7 @@ function collectBands() {
   } else if (screen === "sports") {
     Array.prototype.forEach.call($("sportsWrap").querySelectorAll(".rowblk"), function (blk) {
       var cards = Array.prototype.slice.call(blk.querySelectorAll(".gcard"));
-      if (cards.length) out.push({ els: cards, kind: "strip", stripInner: blk.querySelector(".stripInner"), rowBlk: blk, wrapEl: $("sportsWrap"), padL: 72, viewW: 1920, cardW: 294, cardWid: 280, tx: 0, rowTop: blk.offsetTop, rowH: blk.offsetHeight });
+      if (cards.length) out.push({ els: cards, kind: "strip", stripInner: blk.querySelector(".stripInner"), rowBlk: blk, wrapEl: $("sportsWrap"), padL: 72, viewW: 1920, cardW: 296, cardWid: 280, tx: 0, rowTop: blk.offsetTop, rowH: blk.offsetHeight });
     });
   } else if (screen === "detail") {
     out.push({ els: Array.prototype.slice.call($("dBtns").querySelectorAll(".dbtn")), kind: "btns" });
@@ -1834,7 +1851,7 @@ function createYtPlayer(key) {
 function showTrailerFallback(msg) {
   if (trailerAdvTimer) { clearTimeout(trailerAdvTimer); trailerAdvTimer = null; }
   destroyYtPlayer();
-  $("tFrameWrap").innerHTML = '<div style="color:#dbe4f2;font-size:32px;text-align:center;padding-top:400px">' + esc(msg) + "</div>";
+  $("tFrameWrap").innerHTML = '<div style="color:var(--ink-4);font-size:32px;text-align:center;padding-top:400px">' + esc(msg) + "</div>";
   trailerBtnMode = true;
   $("tBtns").style.display = "flex";
   $("tMsg").style.display = "none";
@@ -2033,6 +2050,12 @@ function closePick() {
 }
 function activate(el) {
   if (!el) return;
+  /* Press feedback on sports tiles (the audit's missing :active):
+     a quick scale/brighten so OK visibly lands. */
+  if (el.classList && el.classList.contains("wtile")) {
+    el.classList.add("pressed");
+    setTimeout(function () { el.classList.remove("pressed"); }, 220);
+  }
   if (el.classList.contains("tab")) { switchView(el.getAttribute("data-view")); return; }
   if (el.classList.contains("chip")) {
     if (el.getAttribute("data-reset")) resetFilters();
@@ -2272,7 +2295,7 @@ function sportsYmd(d) { function p(n) { return (n < 10 ? "0" : "") + n; } return
 function fmtGameTime(iso) {
   var d = new Date(iso); if (isNaN(d.getTime())) return "";
   var h = d.getHours(), m = d.getMinutes(), ap = h >= 12 ? "PM" : "AM"; h = h % 12; if (!h) h = 12;
-  return h + ":" + (m < 10 ? "0" : "") + m + " " + ap + " PT";
+  return h + ":" + (m < 10 ? "0" : "") + m + " " + ap;
 }
 function teamOf(c) {
   if (!c || !c.team) return { name: "TBD", abbr: "", logo: "", color: "33415e", score: "", record: "" };
@@ -2588,6 +2611,7 @@ function winLabel(b, games) {
 }
 function renderSports(byLeague) {
   var h = "";
+  var bandCount = 0;
   var now = new Date();
   var isSunday = now.getDay() === 0;
   var hourNow = now.getHours() + now.getMinutes() / 60;
@@ -2625,10 +2649,12 @@ function renderSports(byLeague) {
          league still carries the league name. */
       /* Only a league's first band is labeled (his calls 2026-11-01:
          no day/night words, no 1 PM / 5 PM headers — the rows keep
-         their separation, the words go). */
+         their separation, the words go). The NFL window rides as a
+         quiet dim span, not a middle-dot meta string. */
       var label = "";
-      if (wi === 0) label = l.name + (w.b.nfl ? " &middot; " + winLabel(w.b, games) : "");
+      if (wi === 0) label = l.name + (w.b.nfl ? ' <span class="dim">' + winLabel(w.b, games) + "</span>" : "");
       for (var ci = 0; ci * 6 < tiles.length; ci++) {
+        bandCount++;
         h += '<div class="rowblk">' + (ci === 0 && label ? '<div class="rowlabel">' + label + "</div>" : "") +
           '<div class="strip"><div class="stripInner">' + tiles.slice(ci * 6, ci * 6 + 6).join("") + "</div></div></div>";
       }
@@ -2636,6 +2662,7 @@ function renderSports(byLeague) {
   });
   if (!h) h = '<div class="sportsmsg">No games today.</div>';
   $("sportsWrap").innerHTML = h;
+  $("sportsWrap").classList.toggle("roomy", bandCount > 0 && bandCount <= 5);
 }
 function loadSports(isRefresh) {
   if (sportsBusy) return;
