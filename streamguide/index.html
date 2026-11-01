@@ -125,9 +125,10 @@
   /* sports */
   #view-sports .strip { height:120px; }
   #view-sports .stripInner { height:120px; padding-top:8px; }
-  #view-sports .rowlabel { font-size:24px; margin-bottom:6px; }
-  #view-sports .rowblk { margin-bottom:10px; }
-  .gcard.wtile { width:280px; height:104px; margin-right:14px; padding:8px 16px 8px 22px; border-radius:15px; }
+  #view-sports .rowlabel { font-size:22px; margin-bottom:4px; }
+  #view-sports .rowblk { margin-bottom:8px; }
+  .gcard.wtile { box-sizing:border-box; width:280px; height:104px; margin-right:14px; padding:8px 16px 8px 22px; border-radius:15px; }
+  .gcard.wtile.ant { border:2px solid var(--gold); }
   .wtile .gteams { margin-top:0; }
   .wtile .gtrow { gap:10px; margin-top:2px; }
   .wtile .glogo { width:26px; height:26px; font-size:11px; }
@@ -2545,7 +2546,7 @@ function sWinTile(g) {
     (a.kind === "tune" ? ' data-ch="' + a.ch + '"' : "") +
     (a.kind === "app" ? ' data-app="' + a.appId + '" data-name="' + esc(a.name) + '"' : "") +
     (a.kind === "notlocal" ? ' data-net="' + a.net + '" data-lt="' + esc(a.lt || "") + '"' + (a.via ? ' data-via="' + a.via + '"' : "") : "");
-  return '<div class="gcard wtile' + ((a.kind === "none" || g.state === "post") ? " dim" : "") + '"' + attrs + ">" +
+  return '<div class="gcard wtile' + (a.kind === "tune" ? " ant" : "") + ((a.kind === "none" || a.kind === "notlocal" || g.state === "post") ? " dim" : "") + '"' + attrs + ">" +
     '<span class="gedge"><i style="background:#' + esc(g.away.color || "44506b") + '"></i><i style="background:#' + esc(g.home.color || "44506b") + '"></i></span>' +
     '<div class="gteams">' + winTeamRow(g.away, g.home, g.state) + winTeamRow(g.home, g.away, g.state) + "</div>" +
     '<div class="gc-bot"><span class="gstat' + (live ? "" : " soon") + '">' + esc(stat) + '</span>' +
@@ -2597,14 +2598,21 @@ function renderSports(byLeague) {
         return new Date(x.date) - new Date(y.date);
       });
       var tiles = games.map(sWinTile);
-      /* RedZone leads each Sunday window it covers (10 AM and 1 PM). */
-      if (l.key === "nfl" && rzOn && w.b.nfl && w.b.hour >= 10 && w.b.hour <= 16) {
+      /* RedZone leads the Sunday morning window only (his call
+         2026-11-01: hide it from the afternoon window). */
+      if (l.key === "nfl" && rzOn && w.b.nfl && w.b.hour >= 10 && w.b.hour < 13) {
         var anyLive = all.some(function (g) { return g.state === "in"; });
         tiles.unshift(redzoneCard(anyLive).replace('class="gcard rz"', 'class="gcard rz wtile"'));
       }
-      var label = (wi === 0 ? l.name + " &middot; " : "") + winLabel(w.b, games);
+      /* Labels: NFL windows keep their times; daypart leagues drop the
+         Morning/Afternoon/Tonight words (his call 2026-11-01) — the
+         bands stay separate rows, just unlabeled. First band of a
+         league still carries the league name. */
+      var label = "";
+      if (wi === 0) label = l.name + (w.b.nfl ? " &middot; " + winLabel(w.b, games) : "");
+      else if (w.b.nfl) label = winLabel(w.b, games);
       for (var ci = 0; ci * 6 < tiles.length; ci++) {
-        h += '<div class="rowblk">' + (ci === 0 ? '<div class="rowlabel">' + label + "</div>" : "") +
+        h += '<div class="rowblk">' + (ci === 0 && label ? '<div class="rowlabel">' + label + "</div>" : "") +
           '<div class="strip"><div class="stripInner">' + tiles.slice(ci * 6, ci * 6 + 6).join("") + "</div></div></div>";
       }
     });
