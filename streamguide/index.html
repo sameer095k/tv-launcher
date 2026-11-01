@@ -2320,7 +2320,7 @@ var SPORT_APPS = [
    all 5 chain steps PASS); the NBA extension was verified against
    real TitanTV data for the 2026-10-27 Coast 2 Coast slate
    (Knicks = KNBC news, not local; Lakers = KNBC game, local). ---- */
-var TTV_KEY = "sg_ttv_v3", TTV_CACHE_KEY = "sg_ttv_cache_v4", TTV_TTL = 20 * 3600 * 1000;
+var TTV_KEY = "sg_ttv_v3", TTV_CACHE_KEY = "sg_ttv_cache_v5", TTV_TTL = 20 * 3600 * 1000;
 var ttvIds = null, ttvIdsBusy = false, ttvPending = {}, lastByLeague = null;
 var ttvVerdicts = {};
 try { ttvVerdicts = JSON.parse(localStorage.getItem(TTV_CACHE_KEY) || "{}") || {}; } catch (e) { ttvVerdicts = {}; }
@@ -2449,7 +2449,16 @@ function ttvKickChecks() {
     if (ttvPending[key]) return;
     ttvPending[key] = true;
     var idx = net === "CBS" ? ttvIds.cbs : net === "FOX" ? ttvIds.fox : ttvIds.nbc;
-    ttvSchedule(idx, ttvStamp(new Date(g.date)))
+    /* Probe 35 minutes INTO the game, not at kickoff: TitanTV's
+       schedule answer for a stamp on a window boundary returns the
+       game that is ENDING (a 13:25 probe — even 13:40 — returns the
+       10:00 game, which ends 13:25; 14:00 returns the 13:25 game).
+       At exact kickoff the late-window games judged against the
+       early game's payload, found no cover, and both went unknown
+       -> gold (2026-11-01: Patriots-Dolphins wore gold next to the
+       real Chiefs-Broncos). Probing inside the game lets the judge
+       name the affiliate's actual game for the rival. */
+    ttvSchedule(idx, ttvStamp(new Date(new Date(g.date).getTime() + 35 * 60000)))
       .then(function (s) {
         var v = ttvJudge(g, s);
         if (v) {
@@ -2614,9 +2623,11 @@ function renderSports(byLeague) {
          Morning/Afternoon/Tonight words (his call 2026-11-01) — the
          bands stay separate rows, just unlabeled. First band of a
          league still carries the league name. */
+      /* Only a league's first band is labeled (his calls 2026-11-01:
+         no day/night words, no 1 PM / 5 PM headers — the rows keep
+         their separation, the words go). */
       var label = "";
       if (wi === 0) label = l.name + (w.b.nfl ? " &middot; " + winLabel(w.b, games) : "");
-      else if (w.b.nfl) label = winLabel(w.b, games);
       for (var ci = 0; ci * 6 < tiles.length; ci++) {
         h += '<div class="rowblk">' + (ci === 0 && label ? '<div class="rowlabel">' + label + "</div>" : "") +
           '<div class="strip"><div class="stripInner">' + tiles.slice(ci * 6, ci * 6 + 6).join("") + "</div></div></div>";
