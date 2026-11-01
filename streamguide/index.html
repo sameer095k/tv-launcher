@@ -123,8 +123,22 @@
                    font-weight:700; padding:20px 46px; font-size:25px; }
   .dbtn.loadmore.focused { background:var(--w15); }
   /* sports */
-  #view-sports .strip { height:310px; }
-  #view-sports .stripInner { height:310px; }
+  #view-sports .strip { height:150px; }
+  #view-sports .stripInner { height:150px; }
+  .gcard.wtile { width:280px; height:116px; margin-right:14px; padding:10px 16px 8px 22px; border-radius:15px; }
+  .wtile .gteams { margin-top:0; }
+  .wtile .gtrow { gap:10px; margin-top:3px; }
+  .wtile .glogo { width:30px; height:30px; font-size:11px; }
+  .wtile .glogo img { width:26px; height:26px; }
+  .wtile .gname { font-size:21px; font-weight:700; }
+  .wtile .gscore { font-size:22px; min-width:0; }
+  .wtile .grec { font-size:16px; }
+  .wtile .gc-bot { left:16px; right:16px; bottom:9px; }
+  .wtile .gstat { font-size:16px; }
+  .wtile .gnet { font-size:13px; font-weight:700; padding:3px 9px; border-radius:999px; border:1.5px solid var(--w10); color:var(--ink-12); }
+  .wtile .gnet.ant { background:var(--gold); color:#16181d; border-color:transparent; }
+  .wtile .gnet.none, .wtile .gnet.notlocal { color:var(--dim); font-weight:600; }
+  .gcard.rz.wtile .rz-title { font-size:29px; margin-top:6px; }
   .gcard { display:inline-block; vertical-align:top; width:700px; height:252px; margin-right:28px; border-radius:18px;
            background:var(--card); border:1px solid var(--line); padding:24px 28px 18px 36px; position:relative; overflow:hidden; }
   .gedge { position:absolute; left:0; top:0; bottom:0; width:7px; }
@@ -1172,7 +1186,7 @@ function collectBands() {
   } else if (screen === "sports") {
     Array.prototype.forEach.call($("sportsWrap").querySelectorAll(".rowblk"), function (blk) {
       var cards = Array.prototype.slice.call(blk.querySelectorAll(".gcard"));
-      if (cards.length) out.push({ els: cards, kind: "strip", stripInner: blk.querySelector(".stripInner"), rowBlk: blk, wrapEl: $("sportsWrap"), padL: 72, viewW: 1920, cardW: 728, cardWid: 700, tx: 0, rowTop: blk.offsetTop, rowH: blk.offsetHeight });
+      if (cards.length) out.push({ els: cards, kind: "strip", stripInner: blk.querySelector(".stripInner"), rowBlk: blk, wrapEl: $("sportsWrap"), padL: 72, viewW: 1920, cardW: 294, cardWid: 280, tx: 0, rowTop: blk.offsetTop, rowH: blk.offsetHeight });
     });
   } else if (screen === "detail") {
     out.push({ els: Array.prototype.slice.call($("dBtns").querySelectorAll(".dbtn")), kind: "btns" });
@@ -2509,19 +2523,89 @@ function redzoneCard(anyLive) {
     '<div class="rz-title">NFL <span>REDZONE</span></div>' +
     '<div class="gc-bot"><span class="gstat">' + (anyLive ? "LIVE" : "SUNDAY") + "</span></div></div>";
 }
+function winTeamRow(t, o, state) {
+  var win = (state === "in" || state === "post") && t.score !== "" && o.score !== "" && Number(t.score) > Number(o.score);
+  var lose = (state === "in" || state === "post") && t.score !== "" && o.score !== "" && Number(t.score) < Number(o.score);
+  var right = (state === "in" || state === "post") ? '<span class="gscore">' + esc(t.score) + "</span>"
+    : (t.record ? '<span class="grec">' + esc(t.record) + "</span>" : "");
+  var badge = t.logo
+    ? '<img src="' + esc(t.logo) + '" alt="" data-a="' + esc(t.abbr) + '" onerror="var p=this.parentNode,a=this.getAttribute(\'data-a\');this.remove();p.textContent=a;"/>'
+    : esc(t.abbr);
+  return '<div class="gtrow' + (win ? " win" : "") + (lose ? " lose" : "") + '"><span class="glogo">' +
+    badge + '</span>' +
+    '<span class="gname">' + esc(t.abbr || t.name) + "</span>" + right + "</div>";
+}
+function sWinTile(g) {
+  var a = gameAction(g);
+  var live = g.state === "in";
+  var stat = live ? (g.detail || "Live") : g.state === "post" ? (g.detail || "Final") : fmtGameTime(g.date);
+  var attrs = ' data-act="game" data-kind="' + a.kind + '"' +
+    (a.kind === "tune" ? ' data-ch="' + a.ch + '"' : "") +
+    (a.kind === "app" ? ' data-app="' + a.appId + '" data-name="' + esc(a.name) + '"' : "") +
+    (a.kind === "notlocal" ? ' data-net="' + a.net + '" data-lt="' + esc(a.lt || "") + '"' + (a.via ? ' data-via="' + a.via + '"' : "") : "");
+  return '<div class="gcard wtile' + ((a.kind === "none" || g.state === "post") ? " dim" : "") + '"' + attrs + ">" +
+    '<span class="gedge"><i style="background:#' + esc(g.away.color || "44506b") + '"></i><i style="background:#' + esc(g.home.color || "44506b") + '"></i></span>' +
+    '<div class="gteams">' + winTeamRow(g.away, g.home, g.state) + winTeamRow(g.home, g.away, g.state) + "</div>" +
+    '<div class="gc-bot"><span class="gstat' + (live ? "" : " soon") + '">' + esc(stat) + '</span>' +
+    '<span class="gnet ' + a.cls + '">' + esc(a.chip) + "</span></div></div>";
+}
+/* Time windows (v3.5.0 layout, his design): NFL groups by kickoff hour —
+   its starts are clustered — everything else by daypart, because those
+   tips stagger across the evening. A one-game NFL window is labeled with
+   its exact time; a multi-game window with the hour. */
+function winBucket(g) {
+  var h = new Date(g.date).getHours();
+  if (g.league.key === "nfl") return { key: "h" + h, hour: h, nfl: true };
+  if (h < 12) return { key: "morning", label: "Morning" };
+  if (h < 17) return { key: "aft", label: "Afternoon" };
+  return { key: "tonight", label: "Tonight" };
+}
+function winLabel(b, games) {
+  if (!b.nfl) return b.label;
+  if (games.length === 1) {
+    var d = new Date(games[0].date), h = d.getHours(), m = d.getMinutes();
+    return (h % 12 || 12) + ":" + (m < 10 ? "0" : "") + m + " " + (h >= 12 ? "PM" : "AM");
+  }
+  return (b.hour % 12 || 12) + ":00 " + (b.hour >= 12 ? "PM" : "AM");
+}
 function renderSports(byLeague) {
   var h = "";
   var now = new Date();
   var isSunday = now.getDay() === 0;
   var hourNow = now.getHours() + now.getMinutes() / 60;
+  var rzOn = isSunday && hourNow >= 9.5 && hourNow <= 17.75;
   selLeagues().forEach(function (l) {
     var all = sortGames(byLeague[l.key] || []).slice(0, 40);
-    var cards = all.map(gameCard).join("");
-    if (l.key === "nfl" && isSunday && hourNow >= 9.5 && hourNow <= 17.75 && all.length) {
-      cards = redzoneCard(all.some(function (g) { return g.state === "in"; })) + cards;
-    }
-    if (!cards) return;
-    h += '<div class="rowblk"><div class="rowlabel">' + l.name + '</div><div class="strip"><div class="stripInner">' + cards + "</div></div></div>";
+    if (!all.length) return;
+    var wins = [], byKey = {};
+    all.forEach(function (g) {
+      var b = winBucket(g);
+      if (!byKey[b.key]) { byKey[b.key] = { b: b, games: [] }; wins.push(byKey[b.key]); }
+      byKey[b.key].games.push(g);
+    });
+    wins.sort(function (x, y) { return new Date(x.games[0].date) - new Date(y.games[0].date); });
+    wins.forEach(function (w, wi) {
+      var games = w.games.slice().sort(function (x, y) {
+        var sx = x.state === "in" ? 0 : x.state === "pre" ? 1 : 2;
+        var sy = y.state === "in" ? 0 : y.state === "pre" ? 1 : 2;
+        if (sx !== sy) return sx - sy;
+        var rx = gameAction(x).kind === "tune" ? 0 : gameAction(x).kind === "app" ? 1 : 2;
+        var ry = gameAction(y).kind === "tune" ? 0 : gameAction(y).kind === "app" ? 1 : 2;
+        if (rx !== ry) return rx - ry;
+        return new Date(x.date) - new Date(y.date);
+      });
+      var tiles = games.map(sWinTile);
+      /* RedZone leads each Sunday window it covers (10 AM and 1 PM). */
+      if (l.key === "nfl" && rzOn && w.b.nfl && w.b.hour >= 10 && w.b.hour <= 16) {
+        var anyLive = all.some(function (g) { return g.state === "in"; });
+        tiles.unshift(redzoneCard(anyLive).replace('class="gcard rz"', 'class="gcard rz wtile"'));
+      }
+      var label = (wi === 0 ? l.name + " &middot; " : "") + winLabel(w.b, games);
+      for (var ci = 0; ci * 6 < tiles.length; ci++) {
+        h += '<div class="rowblk">' + (ci === 0 ? '<div class="rowlabel">' + label + "</div>" : "") +
+          '<div class="strip"><div class="stripInner">' + tiles.slice(ci * 6, ci * 6 + 6).join("") + "</div></div></div>";
+      }
+    });
   });
   if (!h) h = '<div class="sportsmsg">No games today.</div>';
   $("sportsWrap").innerHTML = h;
