@@ -2303,7 +2303,7 @@ var SPORT_APPS = [
    all 5 chain steps PASS); the NBA extension was verified against
    real TitanTV data for the 2026-10-27 Coast 2 Coast slate
    (Knicks = KNBC news, not local; Lakers = KNBC game, local). ---- */
-var TTV_KEY = "sg_ttv_v2", TTV_CACHE_KEY = "sg_ttv_cache_v2", TTV_TTL = 20 * 3600 * 1000;
+var TTV_KEY = "sg_ttv_v2", TTV_CACHE_KEY = "sg_ttv_cache_v3", TTV_TTL = 20 * 3600 * 1000;
 var ttvIds = null, ttvIdsBusy = false, ttvPending = {}, lastByLeague = null;
 var ttvVerdicts = {};
 try { ttvVerdicts = JSON.parse(localStorage.getItem(TTV_CACHE_KEY) || "{}") || {}; } catch (e) { ttvVerdicts = {}; }
@@ -2371,30 +2371,31 @@ function ttvNorm(s) { return (s || "").toLowerCase().replace(/[^a-z0-9 ]+/g, " "
    can't judge (no event, odd shape) — unknown is never cached, so a
    later refresh retries instead of mislabeling a game. */
 function ttvJudge(g, s) {
-  var ev = null;
+  var ev = null, sameDay = [];
   try {
     var days = s.channels[0].days, evs = [];
     days.forEach(function (d) { (d.events || []).forEach(function (e) { evs.push(e); }); });
     var when = new Date(g.date), t = when.getTime(), ymd = sportsYmd(when);
-    var sameDay = evs.filter(function (e) { return sportsYmd(new Date(e.startTime)) === ymd; });
+    sameDay = evs.filter(function (e) { return sportsYmd(new Date(e.startTime)) === ymd; });
     for (var i = 0; i < sameDay.length; i++) {
       var st = new Date(sameDay[i].startTime).getTime(), en = new Date(sameDay[i].endTime).getTime();
       if (st <= t && t < en) { ev = sameDay[i]; break; }
     }
   } catch (e) { return null; }
   if (!ev) {
-    /* Listings exist for the day but nothing covers kickoff (e.g. the
-       affiliate's only NFL block ends at 13:25 and there is no late
-       game) — a definitive not-local with nothing to name. An empty
-       response, by contrast, is a data hiccup: stay unknown. */
-    try {
-      var anyDay = s.channels[0].days.some(function (d) { return (d.events || []).length > 0; });
-      var sameDayCount = 0;
-      s.channels[0].days.forEach(function (d) { (d.events || []).forEach(function (e) {
-        if (sportsYmd(new Date(e.startTime)) === sportsYmd(new Date(g.date))) sameDayCount++;
-      }); });
-      if (anyDay && sameDayCount > 0) return { local: false, lt: "" };
-    } catch (e) {}
+    /* Nothing covers kickoff. That's a definitive not-local only
+       when the listing provably covers that daypart — it holds
+       same-day programming starting at/after kickoff (postgame,
+       news, a movie). A listing that simply STOPS is missing data,
+       not an absence: on 2026-11-01 TitanTV dropped KCBS's whole
+       late window while the game (Chiefs-Broncos, per the 506sports
+       map) was on — v3.4.0 called it not-local. Stay unknown; the
+       game keeps its antenna treatment (v3.4.1). */
+    var later = false;
+    for (var j = 0; j < sameDay.length; j++) {
+      if (new Date(sameDay[j].startTime).getTime() >= new Date(g.date).getTime()) { later = true; break; }
+    }
+    if (sameDay.length > 0 && later) return { local: false, lt: "" };
     return null;
   }
   var ep = ev.episodeTitle || "";
