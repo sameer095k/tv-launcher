@@ -2294,19 +2294,26 @@ var SPORT_APPS = [
    tip-off" — episodeTitle is "Away at Home from Stadium", matching
    ESPN's team names. IDs are minted once (guest user -> provider
    803 -> lineup -> channel map) and persisted (sg_ttv_v2: the map
-   gained the NBC affiliate); verdicts are cached ~20h per
-   date+network+start time. Any failure leaves the verdict unknown
+   gained the NBC affiliate); verdicts are cached ~20h per game
+   (v3.4.0 — they were per window until the first NFL Sunday with
+   four simultaneous games per network exposed that). Any failure
+   leaves the verdict unknown
    and Sports behaves exactly as it did before this feature.
    Verified end-to-end on this TV 2026-10-26 (throwaway TitanTest1:
    all 5 chain steps PASS); the NBA extension was verified against
    real TitanTV data for the 2026-10-27 Coast 2 Coast slate
    (Knicks = KNBC news, not local; Lakers = KNBC game, local). ---- */
-var TTV_KEY = "sg_ttv_v2", TTV_CACHE_KEY = "sg_ttv_cache_v1", TTV_TTL = 20 * 3600 * 1000;
+var TTV_KEY = "sg_ttv_v2", TTV_CACHE_KEY = "sg_ttv_cache_v2", TTV_TTL = 20 * 3600 * 1000;
 var ttvIds = null, ttvIdsBusy = false, ttvPending = {}, lastByLeague = null;
 var ttvVerdicts = {};
 try { ttvVerdicts = JSON.parse(localStorage.getItem(TTV_CACHE_KEY) || "{}") || {}; } catch (e) { ttvVerdicts = {}; }
 function ttvP2(n) { return (n < 10 ? "0" : "") + n; }
-function ttvKeyFor(g, net) { var d = new Date(g.date); return sportsYmd(d) + "|" + net + "|" + ttvP2(d.getHours()) + ttvP2(d.getMinutes()); }
+/* Verdicts are PER GAME (v3.4.0). Up to v3.3.0 the key was
+   date+network+start time, so every game in a Sunday window shared
+   one verdict — whichever game resolved first stamped the whole
+   window and nothing differentiated. The cache key bumped to v2 to
+   drop those shared verdicts. */
+function ttvKeyFor(g, net) { var d = new Date(g.date); return sportsYmd(d) + "|" + net + "|" + ttvP2(d.getHours()) + ttvP2(d.getMinutes()) + "|" + (g.away && g.away.abbr ? g.away.abbr : "?") + "@" + (g.home && g.home.abbr ? g.home.abbr : "?"); }
 function ttvStamp(d) { return sportsYmd(d) + ttvP2(d.getHours()) + ttvP2(d.getMinutes()); }
 function ttvFetch(path, opts) {
   return fetch("https://titantv.com/api" + path, opts).then(function (r) {
@@ -2398,6 +2405,17 @@ function ttvJudge(g, s) {
   }
   return { local: false, lt: "" };
 }
+/* One schedule fetch per channel+window, shared by every game in
+   that window; each game is then judged on its own (v3.4.0). */
+var ttvSched = {};
+function ttvSchedule(idx, stamp) {
+  var sk = idx + "|" + stamp;
+  if (!ttvSched[sk]) {
+    ttvSched[sk] = ttvFetch("/schedule/" + ttvIds.u + "/" + ttvIds.l + "/" + stamp + "/4/7?channelIndex=" + idx + "&channelCount=1")
+      .catch(function (e) { delete ttvSched[sk]; throw e; });
+  }
+  return ttvSched[sk];
+}
 function ttvKickChecks() {
   if (!ttvIds || !lastByLeague) return;
   ["nfl", "nba"].forEach(function (lk) { (lastByLeague[lk] || []).forEach(function (g) {
@@ -2407,7 +2425,7 @@ function ttvKickChecks() {
     if (ttvPending[key]) return;
     ttvPending[key] = true;
     var idx = net === "CBS" ? ttvIds.cbs : net === "FOX" ? ttvIds.fox : ttvIds.nbc;
-    ttvFetch("/schedule/" + ttvIds.u + "/" + ttvIds.l + "/" + ttvStamp(new Date(g.date)) + "/4/7?channelIndex=" + idx + "&channelCount=1")
+    ttvSchedule(idx, ttvStamp(new Date(g.date)))
       .then(function (s) {
         var v = ttvJudge(g, s);
         if (v) {
