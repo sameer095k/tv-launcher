@@ -2616,7 +2616,13 @@ function renderSports(byLeague) {
   var rzOn = isSunday && hourNow >= 9.5 && hourNow <= 17.75;
   selLeagues().forEach(function (l) {
     var all = sortGames(byLeague[l.key] || []).slice(0, 40);
-    if (!all.length) return;
+    /* Finals collect into their own band at the end of the league
+       (his pick 2026-11-01 from the A/B/C mocks): the top of the
+       board stays "on now / coming up", results settle below, and
+       a game moves down when it ends. */
+    var fins = all.filter(function (g) { return g.state === "post"; });
+    all = all.filter(function (g) { return g.state !== "post"; });
+    if (!all.length && !fins.length) return;
     var wins = [], byKey = {};
     all.forEach(function (g) {
       var b = winBucket(g);
@@ -2658,6 +2664,14 @@ function renderSports(byLeague) {
           '<div class="strip"><div class="stripInner">' + tiles.slice(ci * 6, ci * 6 + 6).join("") + "</div></div></div>";
       }
     });
+    if (fins.length) {
+      var fTiles = fins.slice().sort(function (x, y) { return new Date(x.date) - new Date(y.date); }).map(sWinTile);
+      for (var fi = 0; fi * 6 < fTiles.length; fi++) {
+        bandCount++;
+        h += '<div class="rowblk">' + (fi === 0 && !wins.length ? '<div class="rowlabel">' + l.name + "</div>" : "") +
+          '<div class="strip"><div class="stripInner">' + fTiles.slice(fi * 6, fi * 6 + 6).join("") + "</div></div></div>";
+      }
+    }
   });
   if (!h) h = '<div class="sportsmsg">No games today.</div>';
   $("sportsWrap").innerHTML = h;
